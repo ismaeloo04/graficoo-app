@@ -352,6 +352,22 @@ select.input { appearance: auto; }
 .arch-fix { display: grid; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line, #2a2a2e); }
 .arch-fix:first-of-type { border-top: 0; }
 .danger-link { color: var(--red-ink, #ee2e24) !important; }
+.wallets { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.wallet { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; display: grid; gap: 2px; }
+.wallet span { font-size: 12px; color: var(--muted); font-weight: 600; }
+.wallet b { font-size: 18px; }
+.wallet.total { grid-column: 1 / -1; background: #141414; border-color: #141414; border-top: 3px solid var(--red); }
+.wallet.total span { color: #b5b5b8; } .wallet.total b { color: #fff; font-size: 22px; }
+.money3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.money3 div { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 6px; display: grid; gap: 2px; text-align: center; }
+.money3 span { font-size: 12px; color: var(--muted); font-weight: 600; } .money3 b { font-size: 16px; }
+.cash-ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 18px; flex: none; }
+.cash-ic.in { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+.cash-ic.out { background: var(--red-soft); color: var(--red-ink); }
+.amount-input { font-size: 28px !important; font-weight: 800; text-align: center; }
+.month-nav { display: flex; align-items: center; gap: 8px; }
+.gear-btn { background: none; border: 0; color: inherit; padding: 6px; display: grid; place-items: center; cursor: pointer; }
+@media (min-width: 700px) { .wallets { grid-template-columns: repeat(4, 1fr); } }
 .paper .pb { gap: .55em; padding-top: 1.2em; }
 .paper h4 { font-size: 1.25em; }
 .paper td { padding: .4em .6em; }
@@ -429,6 +445,7 @@ select.input { appearance: auto; }
         <span class="sp"></span>
         <button class="sync" id="syncBtn" style="background:none;border:0" title="تحديث البيانات"><i></i><span id="syncText">متزامن</span></button>
         <span class="role-tag" id="roleTag" hidden>موظف</span>
+        <button class="gear-btn" data-nav="more" aria-label="الإعدادات" title="الإعدادات"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
         <button class="pill-btn" id="internalBtn" aria-pressed="false" title="إظهار التكلفة والربح">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
           <span id="internalLbl">وضع العميل</span>
@@ -441,7 +458,7 @@ select.input { appearance: auto; }
       <button data-nav="projects"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg>المشاريع</button>
       <button data-nav="quote" aria-label="تسعير جديد"><span class="fab"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>تسعير</button>
       <button data-nav="clients"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="4"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16 4a4 4 0 0 1 0 8M22 21c0-3-1.5-5-4-5.7"/></svg>العملاء</button>
-      <button data-nav="more"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>الإعدادات</button>
+      <button data-nav="money"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20M16 15h2M6 6V4h12v2"/></svg>الفلوس</button>
     </nav>
   </div>
   <div id="layer"></div>
@@ -647,7 +664,7 @@ const ACTION_AR = { 'Keep close (VIP)': 'خليك قريب منه', 'Call — do
 const PAPER_EN = { 'كوشيه 150 جم': 'Coated 150 gsm', 'كوشيه 200 جم': 'Coated 200 gsm', 'كوشيه 250 جم': 'Coated 250 gsm', 'كوشيه 300 جم': 'Coated 300 gsm', 'فرخ ستيكر': 'Sticker sheet' };
 
 /* ---------- state ---------- */
-const state = { archive: [], view: 'home', internal: false, projFilter: 'open', clientQ: '', projects: [], draft: null };
+const state = { archive: [], cash: { types: [], wallets: [], rows: [] }, cashMonth: '', cashFilter: 'all', view: 'home', internal: false, projFilter: 'open', clientQ: '', projects: [], draft: null };
 const isStaff = () => ME && ME.role === 'staff';
 const showInternal = () => state.internal && !isStaff();
 function newDraft(client, quick) {
@@ -733,7 +750,7 @@ async function boot() {
     const B = await api('bootstrap');
     D = { items: B.items, settings: B.settings, clients: B.clients, packages: B.packages, suppliers: B.suppliers };
     E = makeEngine(D); S = D.settings; STUDIO = B.studio; APP = B.app; TODAY = B.today; ME = B.user;
-    state.projects = B.projects; state.archive = B.archive || [];
+    state.projects = B.projects; state.archive = B.archive || []; state.cash = B.cash || state.cash; state.cashMonth = B.today.slice(0, 7);
     const saved = store.get('draft');
     try { state.draft = saved ? JSON.parse(saved) : newDraft(null); } catch (e) { state.draft = newDraft(null); }
     if (!state.draft || !Array.isArray(state.draft.lines)) state.draft = newDraft(null);
@@ -747,7 +764,7 @@ function setSyncText() { $('#syncText').textContent = APP && APP.lastExcelSync ?
 async function refresh(quiet) {
   try {
     const R = await api('refreshData');
-    D.clients = R.clients; state.projects = R.projects; if (R.archive) state.archive = R.archive; TODAY = R.today; APP.lastExcelSync = R.lastExcelSync;
+    D.clients = R.clients; state.projects = R.projects; if (R.archive) state.archive = R.archive; if (R.cash) state.cash = R.cash; TODAY = R.today; APP.lastExcelSync = R.lastExcelSync;
     setSyncText(); if (!$('#layer').innerHTML) render();
     if (!quiet) toast('البيانات اتحدثت');
   } catch (e) { if (!quiet) toast(e.message); }
@@ -855,7 +872,7 @@ function render() {
   document.querySelectorAll('.nav [data-nav]').forEach((b) => { if (b.dataset.nav === state.view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   $('#internalBtn').hidden = isStaff();
   $('#roleTag').hidden = !isStaff();
-  const v = { home: viewHome, projects: viewProjects, quote: viewQuote, clients: viewClients, more: viewMore }[state.view];
+  const v = { home: viewHome, projects: viewProjects, quote: viewQuote, clients: viewClients, more: viewMore, money: viewMoney }[state.view];
   $('#main').innerHTML = v();
   if (state.view === 'quote') updateQuoteNumbers();
 }
@@ -1264,11 +1281,12 @@ function projectSheet(id) {
       <dt>تاريخ الاتفاق</dt><dd>${arDate(p.date)}</dd>
       <dt>التسليم المتوقع</dt><dd>${arDate(p.delivery)}${isOpen(p) && p.delivery < TODAY && p.stage !== '1 - Quotation' ? ' <span class="tag bad">متأخر</span>' : ''}</dd>
       <dt>قيمة العرض</dt><dd class="num">${money(p.quote)}</dd>
-      <dt>المحصّل <span class="sub" style="font-weight:400">(من Excel)</span></dt><dd class="num" style="color:var(--ok)">${money(p.collected)}</dd>
+      <dt>المحصّل</dt><dd class="num" style="color:var(--ok)">${money(p.collected)}</dd>
       <dt>المتبقي</dt><dd class="num" style="color:${p.due > 0 ? 'var(--red-ink)' : 'inherit'}">${money(p.due)}</dd>
       ${showInternal() ? `<dt>تكلفة المورد</dt><dd class="num">${money(p.supplier)}</dd><dt>الهامش</dt><dd class="num">${pct(p.margin)}</dd>` : ''}
       ${p.notes ? `<dt>ملاحظات</dt><dd style="font-weight:500">${esc(p.notes)}</dd>` : ''}
-    </dl></div>
+    </dl>${p.cashPending ? '<p class="sub" style="margin:0">فيه حركات فلوس لسه منزلتش ملف الإكسيل، والأرقام فوق محسوبة معاها.</p>' : ''}
+    ${p.stage !== 'Cancelled' ? `<div class="btn-row"><button class="btn ghost small" data-act="cash-for" data-t="Client Payment" data-id="${p.id}">سجّل دفعة من العميل</button><button class="btn ghost small" data-act="cash-for" data-t="Direct Cost" data-id="${p.id}">سجّل تكلفة مورد</button></div>` : ''}</div>
     ${p.stage === '1 - Quotation' && !pending ? `<div class="card"><div class="row"><h3 class="grow">${notSent ? 'العرض لسه متبعتش' : 'متابعة العرض'}</h3>${p.sentAt ? `<span class="tag ${daysBetween(p.lastFollow || p.sentAt, TODAY) >= APP.followDays ? 'warn' : ''}">اتبعت من ${daysBetween(p.sentAt, TODAY)} أيام</span>` : ''}</div>
       ${p.sentAt ? `<p class="sub" style="margin:0">العرض صالح لحد ${arDate(addDays(p.sentAt, APP.validDays))}.</p><button class="btn ghost small" data-act="follow" data-id="${p.id}">جهّز رسالة متابعة</button>`
         : `<button class="btn primary small" data-act="doc" data-type="quote" data-id="${p.id}">افتح العرض وابعته</button>`}</div>` : ''}
@@ -1314,6 +1332,110 @@ function clientSheetView(id) {
     ${projs.length || oldJobs ? `<button class="btn ghost" data-act="statement" data-client="${c.id}">فاتورة مجمعة لشغله في فترة${oldJobs ? ` (فيها ${oldJobs} شغلانة قديمة)` : ''}</button>` : ''}${projs.length ? `<section class="block"><h2>المشاريع</h2><div class="list">${projs.map(projRow).join('')}</div></section>` : ''}
   </div>
   <div class="sheet-foot">${last ? `<div class="btn-row"><button class="btn ghost" data-act="repeat" data-id="${last.id}">كرر آخر أوردر</button><button class="btn primary" data-act="quote-for" data-id="${c.id}">تسعير جديد</button></div>` : `<button class="btn primary" data-act="quote-for" data-id="${c.id}">تسعير جديد للعميل ده</button>`}</div>`);
+}
+
+/* ---------- money: same as the Cash Log sheet ---------- */
+const CASH_AR = { 'Client Payment': 'دفعة عميل', 'Direct Cost': 'تكلفة شغل (مورد/خامات)', 'Operating Expense': 'مصروف تشغيل', 'Owner Withdrawal': 'سحب شخصي', 'Capital Injection': 'إضافة رأس مال', 'Wallet Transfer': 'تحويل بين المحافظ', 'Asset Purchase': 'شراء أصل / معدة' };
+const CASH_IN_TYPES = ['Client Payment', 'Capital Injection'];
+const DEFAULT_WALLETS = ['Cash', 'InstaPay', 'Vod.Cash', 'E&.Cash'];
+const walletNames = () => { const w = (state.cash.wallets || []).map((x) => x.name).filter(Boolean); return w.length ? w : DEFAULT_WALLETS; };
+const projLabel = (p) => `${p.id} | ${p.clientName || ''} | ${p.desc || ''}`;
+const arMonth = (ym) => MONTHS[Number(ym.slice(5, 7)) - 1] + ' ' + ym.slice(0, 4);
+function shiftMonth(ym, d) { const dt = new Date(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)) - 1 + d, 1); return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0'); }
+function walletBalances() {
+  const W = {};
+  walletNames().forEach((n) => { W[n] = { name: n, opening: 0, in: 0, out: 0 }; });
+  (state.cash.wallets || []).forEach((w) => { if (W[w.name]) W[w.name].opening = Number(w.opening) || 0; });
+  state.cash.rows.forEach((m) => { const w = W[m.wallet] || (W[m.wallet] = { name: m.wallet || '—', opening: 0, in: 0, out: 0 }); w.in += m.in; w.out += m.out; });
+  return Object.values(W).map((w) => ({ ...w, bal: w.opening + w.in - w.out }));
+}
+function cashRow(m) {
+  const isIn = m.in > 0, amt = isIn ? m.in : m.out;
+  const pid = String(m.project || '').split(' | ')[0];
+  const where = m.excel ? ' · من الإكسيل' : m.synced ? '' : ' · <span style="color:var(--warn)">لسه منزلتش الإكسيل</span>';
+  return `<button class="li" data-act="cash-open" data-id="${esc(m.id)}"><span class="cash-ic ${isIn ? 'in' : 'out'}">${isIn ? '+' : '−'}</span><span class="grow"><div class="t">${esc(CASH_AR[m.type] || m.type || '—')}${pid ? ` · <span class="num">${esc(pid)}</span>` : ''}</div><div class="s">${arDate(m.date)} · ${esc(m.wallet)}${m.note ? ' · ' + esc(m.note) : ''}${where}</div></span><span class="v num" style="color:${isIn ? 'var(--ink)' : 'var(--red-ink)'}">${isIn ? '+' : '−'}${money(amt)}</span></button>`;
+}
+function viewMoney() {
+  const C = state.cash, mon = state.cashMonth || TODAY.slice(0, 7), f = state.cashFilter;
+  const inMonth = C.rows.filter((m) => m.date.slice(0, 7) === mon);
+  const real = inMonth.filter((m) => m.type !== 'Wallet Transfer');
+  const tin = real.reduce((a, m) => a + m.in, 0), tout = real.reduce((a, m) => a + m.out, 0);
+  const list = inMonth.filter((m) => (f === 'all' ? true : f === 'in' ? m.in > 0 : m.out > 0)).sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
+  const byType = {}; real.forEach((m) => { byType[m.type] = (byType[m.type] || 0) + m.in - m.out; });
+  const wb = isStaff() ? [] : walletBalances();
+  const pending = C.rows.filter((m) => !m.excel && !m.synced).length;
+  return `<section class="block"><div class="sec-head"><h1>الفلوس</h1><button class="btn primary small" data-act="cash-new">+ حركة جديدة</button></div>
+  ${wb.length ? `<div class="wallets"><div class="wallet total"><span>الرصيد في كل المحافظ</span><b class="num">${money(wb.reduce((a, w) => a + w.bal, 0))}</b></div>${wb.map((w) => `<div class="wallet"><span>${esc(w.name)}</span><b class="num" style="${w.bal < 0 ? 'color:var(--red-ink)' : ''}">${money(w.bal)}</b></div>`).join('')}</div>` : ''}
+  <div class="month-nav"><button class="btn ghost small" data-act="cash-month" data-d="-1">السابق</button><b class="grow" style="text-align:center">${arMonth(mon)}</b><button class="btn ghost small" data-act="cash-month" data-d="1" ${mon >= TODAY.slice(0, 7) ? 'disabled' : ''}>التالي</button></div>
+  <div class="money3"><div><span>داخل</span><b class="num">${money(tin)}</b></div><div><span>طالع</span><b class="num" style="color:var(--red-ink)">${money(tout)}</b></div><div><span>الصافي</span><b class="num" style="${tin - tout < 0 ? 'color:var(--red-ink)' : ''}">${money(tin - tout)}</b></div></div>
+  ${!isStaff() && Object.keys(byType).length ? `<div class="card"><dl class="kv">${Object.keys(byType).sort((a, b) => Math.abs(byType[b]) - Math.abs(byType[a])).map((t) => `<dt>${esc(CASH_AR[t] || t)}</dt><dd class="num" style="${byType[t] < 0 ? 'color:var(--red-ink)' : ''}">${byType[t] < 0 ? '−' : '+'}${money(Math.abs(byType[t]))}</dd>`).join('')}</dl></div>` : ''}
+  <div class="chips" role="group">${[['all', 'الكل'], ['in', 'داخل'], ['out', 'طالع']].map((c) => `<button class="chip" data-act="cash-filter" data-f="${c[0]}" aria-pressed="${f === c[0]}">${c[1]}</button>`).join('')}</div>
+  ${pending ? `<p class="sub" style="margin:0">${pending} حركة لسه منزلتش ملف الإكسيل، هتنزل في Cash Log مع المزامنة الجاية.</p>` : ''}
+  </section>
+  <div class="list cards">${list.map(cashRow).join('') || '<div class="li"><span class="sub">مفيش حركات في الشهر ده.</span></div>'}</div>`;
+}
+let cashForm = null;
+function cashSheet(opts) {
+  opts = opts || {};
+  const C = state.cash;
+  if (opts.id) {
+    const m = C.rows.find((r) => r.id === opts.id); if (!m) return;
+    if (m.excel) {
+      return openSheet(`<div class="sheet-head"><h2>${esc(CASH_AR[m.type] || m.type)}</h2>${closeBtn}</div>
+      <div class="sheet-body"><div class="card"><dl class="kv"><dt>التاريخ</dt><dd>${arDate(m.date)}</dd><dt>المحفظة</dt><dd>${esc(m.wallet)}</dd><dt>${m.in > 0 ? 'داخل' : 'طالع'}</dt><dd class="num">${money(m.in || m.out)}</dd>${m.project ? `<dt>المشروع</dt><dd>${esc(m.project)}</dd>` : ''}${m.note ? `<dt>ملاحظة</dt><dd>${esc(m.note)}</dd>` : ''}</dl></div>
+      <p class="sub" style="margin:0;line-height:1.7">الحركة دي اتكتبت في ملف الإكسيل (صف ${esc(m.id.replace('X-', ''))} في Cash Log)، فتتعدل أو تتمسح من هناك.</p></div>`);
+    }
+    const mate = m.pair ? C.rows.find((r) => r.id === m.pair) : null;
+    const tr = m.type === 'Wallet Transfer';
+    cashForm = { id: m.id, type: m.type, dir: m.in > 0 ? 'in' : 'out', amount: String(m.in || m.out), wallet: tr ? (m.out ? m.wallet : mate && mate.wallet) : m.wallet, to: tr ? (m.in ? m.wallet : mate && mate.wallet) : '', date: m.date, project: m.project, note: tr && /^تحويل (لـ|من) /.test(m.note) ? '' : m.note };
+  } else {
+    const t = opts.type && C.types.indexOf(opts.type) >= 0 ? opts.type : C.types[0];
+    cashForm = { id: null, type: t, dir: CASH_IN_TYPES.indexOf(t) >= 0 ? 'in' : 'out', amount: '', wallet: walletNames()[0], to: '', date: TODAY, project: opts.project || '', note: '' };
+  }
+  drawCashSheet();
+}
+function readCashForm() {
+  const f = cashForm; if (!f || !$('#cfAmount')) return;
+  f.amount = $('#cfAmount').value; f.date = $('#cfDate').value; f.note = $('#cfNote').value;
+  if ($('#cfProject')) f.project = $('#cfProject').value;
+}
+function drawCashSheet() {
+  const f = cashForm, C = state.cash;
+  const W = walletNames();
+  const needsProj = f.type === 'Client Payment' || f.type === 'Direct Cost';
+  const projs = state.projects.filter((p) => p.stage !== 'Cancelled').sort((a, b) => b.id.localeCompare(a.id));
+  const opts = projs.map((p) => projLabel(p));
+  if (f.project && opts.indexOf(f.project) < 0 && !projs.some((p) => f.project.indexOf(p.id + ' ') === 0)) opts.unshift(f.project);
+  const cur = projs.find((p) => String(f.project).split(' | ')[0] === p.id);
+  const hint = cur ? (f.type === 'Client Payment' ? `قيمة المشروع ${money(cur.quote)} · المحصّل ${money(cur.collected)} · الباقي ${money(cur.due)}` : showInternal() || !isStaff() ? `تكلفة المورد ${money(cur.supplier)}${num(cur.paidSupplier) ? ' · اتدفع ' + money(cur.paidSupplier) : ''}` : '') : '';
+  const tr = f.type === 'Wallet Transfer';
+  openSheet(`<div class="sheet-head"><div class="grow"><div class="eyebrow num">${f.id || ''}</div><h2 style="margin-top:3px">${f.id ? 'تعديل حركة' : 'حركة فلوس جديدة'}</h2></div>${closeBtn}</div>
+  <div class="sheet-body">
+    <div class="field"><span class="lbl">النوع</span><div class="chips wrap">${C.types.map((t) => `<button class="chip" data-act="cash-type" data-t="${esc(t)}" aria-pressed="${f.type === t}" ${f.id && (t === 'Wallet Transfer') !== (f.type === 'Wallet Transfer') ? 'disabled' : ''}>${CASH_IN_TYPES.indexOf(t) >= 0 ? '＋ ' : t === 'Wallet Transfer' ? '⇄ ' : '− '}${esc(CASH_AR[t] || t)}</button>`).join('')}</div></div>
+    <div class="field"><label for="cfAmount">المبلغ (ج)</label><input class="input num amount-input" id="cfAmount" inputmode="decimal" value="${esc(f.amount)}" placeholder="0"></div>
+    <div class="field"><span class="lbl">${tr ? 'من محفظة' : CASH_IN_TYPES.indexOf(f.type) >= 0 ? 'دخلت محفظة' : 'طلعت من محفظة'}</span><div class="chips wrap">${W.map((w) => `<button class="chip" data-act="cash-wallet" data-w="${esc(w)}" aria-pressed="${f.wallet === w}">${esc(w)}</button>`).join('')}</div></div>
+    ${tr ? `<div class="field"><span class="lbl">لمحفظة</span><div class="chips wrap">${W.filter((w) => w !== f.wallet).map((w) => `<button class="chip" data-act="cash-to" data-w="${esc(w)}" aria-pressed="${f.to === w}">${esc(w)}</button>`).join('')}</div></div>` : ''}
+    ${needsProj ? `<div class="field"><label for="cfProject">المشروع${f.type === 'Direct Cost' ? ' (لو تكلفة شغلانة معينة)' : ''}</label><select class="input" id="cfProject" data-act-change="cash-proj"><option value="">${f.type === 'Direct Cost' ? 'من غير مشروع' : 'اختار المشروع'}</option>${opts.map((o) => `<option value="${esc(o)}" ${o === f.project || (cur && o.indexOf(cur.id + ' ') === 0 && !opts.includes(f.project)) ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>${hint ? `<span class="sub" style="font-size:12px">${hint}</span>` : ''}</div>` : ''}
+    <div class="field"><label for="cfDate">التاريخ</label><input class="input num" type="date" id="cfDate" value="${esc(f.date)}"></div>
+    <div class="field"><label for="cfNote">ملاحظة</label><input class="input" id="cfNote" value="${esc(f.note)}" placeholder="${tr ? 'اختياري' : 'مثال: عربون، باقي الحساب، ورق كوشيه...'}"></div>
+  </div>
+  <div class="sheet-foot"><div class="btn-row">${f.id ? '<button class="btn ghost" data-act="cash-del">امسح الحركة</button>' : ''}<button class="btn primary" data-act="cash-save">${f.id ? 'احفظ التعديل' : 'سجّل الحركة'}</button></div></div>`);
+}
+async function saveCashForm() {
+  readCashForm();
+  const f = cashForm;
+  const amount = Number(toLatinDigits(f.amount));
+  if (!(amount > 0)) return toast('اكتب المبلغ');
+  if (!f.wallet) return toast('اختار المحفظة');
+  if (f.type === 'Wallet Transfer' && (!f.to || f.to === f.wallet)) return toast('اختار المحفظة اللي هتحوّل لها');
+  if (f.type === 'Client Payment' && !f.project) return toast('اختار المشروع اللي العميل دفع له');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(f.date || '')) return toast('اختار التاريخ');
+  await withBusy('بيسجّل...', async () => {
+    await api('saveCash', { id: f.id, type: f.type, dir: f.dir, amount, wallet: f.wallet, to: f.to, date: f.date, project: f.project, note: f.note.trim() });
+    await refresh(true);
+  });
+  cashForm = null; state.cashMonth = f.date.slice(0, 7);
+  closeSheet(); render(); toast(f.id ? 'الحركة اتعدلت.' : 'اتسجلت. هتنزل في Cash Log مع المزامنة الجاية.');
 }
 
 /* ---------- edit / delete a project ---------- */
@@ -1974,6 +2096,21 @@ document.addEventListener('click', async (e) => {
       case 'job': return jobSheet(ds.id);
       case 'send-doc': return await sendDoc();
       case 'statement': return statementSheet(ds.client);
+      case 'cash-new': return cashSheet({});
+      case 'cash-open': return cashSheet({ id: ds.id });
+      case 'cash-for': { const pp = state.projects.find((x) => x.id === ds.id); return cashSheet({ type: ds.t, project: pp ? projLabel(pp) : '' }); }
+      case 'cash-type': readCashForm(); cashForm.type = ds.t; cashForm.dir = CASH_IN_TYPES.indexOf(ds.t) >= 0 ? 'in' : 'out'; if (ds.t !== 'Client Payment' && ds.t !== 'Direct Cost') cashForm.project = ''; return drawCashSheet();
+      case 'cash-wallet': readCashForm(); cashForm.wallet = ds.w; if (cashForm.to === ds.w) cashForm.to = ''; return drawCashSheet();
+      case 'cash-to': readCashForm(); cashForm.to = ds.w; return drawCashSheet();
+      case 'cash-save': return await saveCashForm();
+      case 'cash-del': {
+        if (!t.dataset.sure) { t.dataset.sure = '1'; t.textContent = 'متأكد؟ اضغط تاني للمسح'; return; }
+        const id = cashForm.id;
+        await withBusy('بيمسح...', async () => { await api('deleteCash', id); await refresh(true); });
+        cashForm = null; closeSheet(); render(); return toast('الحركة اتمسحت، وهتتشال من Cash Log مع المزامنة الجاية.');
+      }
+      case 'cash-month': state.cashMonth = shiftMonth(state.cashMonth || TODAY.slice(0, 7), Number(ds.d)); return render();
+      case 'cash-filter': state.cashFilter = ds.f; return render();
       case 'arch-fix': return archFixSheet();
       case 'arch-save': return await archSave(ds.id);
       case 'edit-proj': return editProjSheet(ds.id);
@@ -1995,6 +2132,7 @@ document.addEventListener('click', async (e) => {
 });
 document.addEventListener('change', async (e) => {
   const t = e.target;
+  if (t.id === 'cfProject' && cashForm) { readCashForm(); return drawCashSheet(); }
   if ((t.id === 'stFrom' || t.id === 'stTo') && stmtState) return statementSheet(stmtState.cid, $('#stFrom').value, $('#stTo').value);
   if (!t.dataset.upload) return;
   const f = t.files && t.files[0]; if (!f) return;
