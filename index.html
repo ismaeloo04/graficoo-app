@@ -347,6 +347,8 @@ select.input { appearance: auto; }
 .paper .title { font-size: 2.3em; }
 .paper { font-size: 1.8cqw; }
 .paper .stamp { top: 9.2em; }
+.paper .pid { font-size: .78em; color: #7a7a7e; margin-top: .15em; }
+.paper .note { font-size: .78em; color: #6a6a6e; margin: .2em 0 0; }
 .paper .pb { gap: .55em; padding-top: 1.2em; }
 .paper h4 { font-size: 1.25em; }
 .paper td { padding: .4em .6em; }
@@ -1303,14 +1305,14 @@ function clientSheetView(id) {
   <div class="sheet-body">
     <div class="card"><dl class="kv"><dt>الموبايل</dt><dd class="num" dir="ltr">${esc(c.mobile || '—')}</dd><dt>المدينة</dt><dd>${esc(CITY_AR[c.city] || c.city || '—')}</dd><dt>التصنيف</dt><dd>${TIER_AR[c.tier] || c.tier || '—'} · ${ACT_AR[c.activity] || c.activity || ''}</dd><dt>عدد المشاريع</dt><dd class="num">${fmt(c.projects)}</dd><dt>إجمالي التعامل</dt><dd class="num">${money(c.total)}</dd><dt>المتبقي عليه</dt><dd class="num">${money(c.remaining)}</dd><dt>الخطوة الجاية</dt><dd>${esc(ACTION_AR[c.action] || c.action || '—')}</dd></dl>
     ${c.mobile ? `<a class="btn ghost small wa" style="color:#fff" href="${waLink(c.mobile, 'أهلاً يا ' + firstName(c.name) + '، معاك جرافيكوو ستوديو.')}" target="_blank" rel="noopener">كلّمه واتساب</a>` : ''}</div>
-    ${projs.length ? `<section class="block"><h2>المشاريع</h2><div class="list">${projs.map(projRow).join('')}</div></section>` : ''}
+    ${projs.length ? `<button class="btn ghost" data-act="statement" data-client="${c.id}">فاتورة مجمعة لشغله في فترة</button><section class="block"><h2>المشاريع</h2><div class="list">${projs.map(projRow).join('')}</div></section>` : ''}
   </div>
   <div class="sheet-foot">${last ? `<div class="btn-row"><button class="btn ghost" data-act="repeat" data-id="${last.id}">كرر آخر أوردر</button><button class="btn primary" data-act="quote-for" data-id="${c.id}">تسعير جديد</button></div>` : `<button class="btn primary" data-act="quote-for" data-id="${c.id}">تسعير جديد للعميل ده</button>`}</div>`);
 }
 
 function invoicePickSheet() {
   const list = state.projects.filter((p) => p.stage !== 'Cancelled' && stageIdx(p.stage) >= 1).sort((a, b) => b.id.localeCompare(a.id));
-  openSheet(`<div class="sheet-head"><h2>فاتورة لأنهي مشروع؟</h2>${closeBtn}</div><div class="sheet-body"><div class="list">${list.map((p) => `<button class="li" data-act="doc" data-type="invoice" data-id="${p.id}"><span class="grow"><div class="t">${esc(p.desc)}</div><div class="s"><span class="num">${p.id}</span> · ${esc(p.clientName)} · ${stageAr(p.stage)}${p.invoiceNo ? ' · ' + esc(p.invoiceNo) : ''}</div></span><span class="v">${money(p.quote)}</span></button>`).join('') || '<div class="li"><span class="sub">مفيش مشاريع متفق عليها.</span></div>'}</div></div>`);
+  openSheet(`<div class="sheet-head"><h2>فاتورة لأنهي مشروع؟</h2>${closeBtn}</div><div class="sheet-body"><button class="btn ghost" data-act="statement-pick">فاتورة مجمعة لعميل عن فترة (يوم، شهر، سنة)</button><div class="list">${list.map((p) => `<button class="li" data-act="doc" data-type="invoice" data-id="${p.id}"><span class="grow"><div class="t">${esc(p.desc)}</div><div class="s"><span class="num">${p.id}</span> · ${esc(p.clientName)} · ${stageAr(p.stage)}${p.invoiceNo ? ' · ' + esc(p.invoiceNo) : ''}</div></span><span class="v">${money(p.quote)}</span></button>`).join('') || '<div class="li"><span class="sub">مفيش مشاريع متفق عليها.</span></div>'}</div></div>`);
 }
 
 function followSheet(id) {
@@ -1381,7 +1383,7 @@ function termsFor(doc, kindWanted) {
   }
   const cats = doc.cats || [];
   const fits = (t) => t.applies === 'all' || t.applies.split(/\s*[,،]\s*/).some((c) => cats.includes(c));
-  const kinds = kindWanted === 'payment' ? ['payment'] : ['doc', doc.type];
+  const kinds = kindWanted === 'payment' ? ['payment'] : doc.type === 'statement' ? ['invoice'] : ['doc', doc.type];
   return all.filter((t) => kinds.includes(t.kind) && fits(t)).map((t) => (en ? t.en || t.ar : t.ar || t.en)).filter(Boolean);
 }
 function docFromDraft(type, lang) {
@@ -1420,6 +1422,46 @@ function paperHTML(doc) {
   const due = inv ? doc.total - (doc.paid || 0) : doc.total;
   const head = `<div class="ph"><img alt="Graficoo Studio" src="${LOGO_WHITE}"></div><div class="redline"></div>`;
   const foot = `<div class="foot"><div class="slogan">${eyesSVG('#141414')}<span>See the Usual<em>with Unusual Eyes</em></span></div><div class="fpills"><span>${esc(STUDIO.footerPhone)}</span><span>@${esc(STUDIO.social)}</span><span>${esc(STUDIO.email)}</span></div></div>`;
+  const payHTML = `<h4>${T.pay}</h4>
+      <div class="pay">
+        <div style="display:grid;gap:.4em">${STUDIO.pay.map((p) => `<div class="kvp ltr"><span>${esc(en ? p[1] : p[0])}</span><span>${esc(en ? p[2].replace('البنك الأهلي المصري', 'National Bank of Egypt') : p[2])}</span></div>`).join('')}
+          <ul style="margin-top:.4em">${termsFor(doc, 'payment').map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
+        <div class="qr"><img class="qr-img" alt="InstaPay QR" src="${QR_IMG}"></div>
+      </div>`;
+  if (doc.type === 'statement') {
+    const rows = doc.rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.desc)}<div class="pid">${esc(r.id)}${r.inv ? ' · ' + esc(r.inv) : ''}</div></td><td>${arDate(r.date)}</td><td class="m">${m(r.total)}</td><td class="m">${r.paid ? m(r.paid) : '-----'}</td><td class="m">${r.rem > 0.001 ? m(r.rem) : '✓'}</td></tr>`).join('')
+      || '<tr><td colspan="6">مفيش شغل في الفترة دي.</td></tr>';
+    return `<div class="paper-wrap"><article class="paper" dir="rtl" lang="ar">${head}
+    ${doc.rows.length && doc.due <= 0.001 ? `<div class="stamp">${T.paidStamp}</div>` : ''}
+    <div class="pb">
+      <div class="title"><em>فاتـــورة</em> مجمّعــة</div>
+      <h4>${esc(STUDIO.name)}</h4>
+      <div class="grid2">
+        <div class="kvp"><span>${T.addr}</span><span>${esc(STUDIO.address)}</span></div><div class="kvp ltr"><span>رقم الفاتورة</span><span>${esc(doc.no)}</span></div>
+        <div class="kvp ltr"><span>${T.mob}</span><span>${esc(STUDIO.mobile)}</span></div><div class="kvp"><span>تاريخ الإصدار</span><span>${arDate(doc.date)}</span></div>
+        <div class="kvp ltr"><span>${T.mail}</span><span>${esc(STUDIO.email)}</span></div><div class="kvp"><span>عدد الشغلانات</span><span>${doc.rows.length}</span></div>
+      </div>
+      <hr>
+      <h4>${T.to}: ${esc(doc.client.name)}</h4>
+      <div style="display:grid;gap:.45em"><div class="kvp"><span>${T.co}</span><span>${esc(doc.client.company)}</span></div><div class="kvp"><span>${T.ca}</span><span>${esc(doc.client.city)}</span></div><div class="kvp"><span>الفترة</span><span>من ${arDate(doc.from)} لحد ${arDate(doc.to)}</span></div></div>
+      <hr>
+      <h4>الشغل خلال الفترة:</h4>
+      <table><thead><tr>${['الرقم', 'الشغلانة', 'التاريخ', 'الإجمالي', 'المدفوع', 'الباقي'].map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>
+      <div class="tot2">
+        <div class="trows">
+          <div class="trow"><span>إجمالي الشغل</span><span>${m(doc.sub)}</span></div>
+          <div class="trow"><span>${T.paid}</span><span>${doc.paid ? m(doc.paid) : '-----'}</span></div>
+          <div class="trow due"><span>${T.due}</span><span>${m(doc.due)}</span></div>
+        </div>
+      </div>
+      <p class="note">المدفوعات محسوبة لحد ${arDate(doc.date)}، والأرقام بتتحدث لو الفاتورة اتعملت تاني لنفس الفترة.</p>
+      <div class="terms"><h4>${T.terms}</h4><ul>${termsFor(doc, 'doc').map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
+      <hr>
+      ${payHTML}
+    </div>
+    ${foot}
+  </article></div>`;
+  }
   if (job) {
     const rows = doc.lines.map((l, i) => `<tr><td>${i + 1}</td><td>${esc(l.item)}</td><td>${esc(l.qty)}</td><td>${esc(l.job || '')}</td></tr>`).join('');
     return `<div class="paper-wrap"><article class="paper" dir="rtl">${head}<div class="pb">
@@ -1462,20 +1504,70 @@ function paperHTML(doc) {
       </div>
       <div class="terms"><h4>${T.terms}</h4><ul>${termsFor(doc, 'doc').map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
       <hr>
-      <h4>${T.pay}</h4>
-      <div class="pay">
-        <div style="display:grid;gap:.4em">${STUDIO.pay.map((p) => `<div class="kvp ltr"><span>${esc(en ? p[1] : p[0])}</span><span>${esc(en ? p[2].replace('البنك الأهلي المصري', 'National Bank of Egypt') : p[2])}</span></div>`).join('')}
-          <ul style="margin-top:.4em">${termsFor(doc, 'payment').map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
-        <div class="qr"><img class="qr-img" alt="InstaPay QR" src="${QR_IMG}"></div>
-      </div>
+      ${payHTML}
     </div>
     ${foot}
   </article></div>`;
+}
+/* ---------- combined invoice: all of one client's work in a period (up to a year) ---------- */
+function statementProjects(cid, from, to) {
+  return state.projects
+    .filter((p) => String(p.client || '').startsWith(cid + ' ') && p.stage !== 'Cancelled' && stageIdx(p.stage) >= 1)
+    .filter((p) => { const d = String(p.date || '').slice(0, 10); return d >= from && d <= to; })
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.id.localeCompare(b.id));
+}
+function statementRangeError(from, to) {
+  if (!from || !to) return 'اختار تاريخ البداية والنهاية.';
+  if (from > to) return 'تاريخ البداية بعد تاريخ النهاية.';
+  const yearLater = (Number(from.slice(0, 4)) + 1) + from.slice(4);
+  if (to >= yearLater) return 'أقصى فترة سنة (مثلاً من 1 يناير لـ 31 ديسمبر).';
+  return '';
+}
+const r2 = (v) => Math.round(v * 100) / 100;
+function docFromStatement(cid, from, to) {
+  const c = clientById(cid) || {};
+  const rows = statementProjects(cid, from, to).map((p) => {
+    const total = Number(p.quote) || 0;
+    const paid = p.quick ? total : Number(p.collected) || 0;
+    return { id: p.id, inv: p.invoiceNo || '', desc: p.desc || '—', date: String(p.date || '').slice(0, 10), total, paid, rem: r2(total - paid) };
+  });
+  const sub = r2(rows.reduce((a, r) => a + r.total, 0)), paid = r2(rows.reduce((a, r) => a + r.paid, 0));
+  return {
+    type: 'statement', lang: 'ar', cur: 'EGP', cats: [], no: 'ST-' + cid.replace('C-', '') + '-' + from.replace(/-/g, '').slice(2),
+    date: TODAY, from, to, client: { name: c.name || '—', company: c.company || '—', city: CITY_AR[c.city] || c.city || '—', mobile: c.mobile },
+    rows, sub, paid, due: r2(sub - paid),
+  };
+}
+let stmtState = null;
+function statementSheet(cid, from, to) {
+  const y = Number(TODAY.slice(0, 4));
+  const thisMonth = TODAY.slice(0, 8) + '01', prevEnd = addDays(thisMonth, -1);
+  from = from || y + '-01-01'; to = to || TODAY;
+  stmtState = { cid };
+  docState = { from: 'statement', type: 'statement', lang: 'ar', client: cid, fromD: from, toD: to };
+  const c = clientById(cid) || {};
+  const err = statementRangeError(from, to);
+  const doc = err ? null : docFromStatement(cid, from, to);
+  const presets = [['الشهر ده', thisMonth, TODAY], ['الشهر اللي فات', prevEnd.slice(0, 8) + '01', prevEnd], ['السنة دي', y + '-01-01', y + '-12-31'], ['السنة اللي فاتت', (y - 1) + '-01-01', (y - 1) + '-12-31']];
+  openSheet(`<div class="sheet-head"><div class="grow"><div class="eyebrow" style="color:#9a9a9e">فاتورة مجمعة · كل شغل العميل في فترة</div><h2 style="color:#fff;margin-top:2px">${esc(c.name || cid)}</h2></div>${closeBtn}</div>
+  <div class="sheet-body">
+    <div class="chips wrap">${presets.map((p) => `<button class="chip" data-act="stmt-range" data-from="${p[1]}" data-to="${p[2]}" aria-pressed="${p[1] === from && p[2] === to}">${p[0]}</button>`).join('')}</div>
+    <div class="btn-row"><div class="field grow"><label for="stFrom">من يوم</label><input class="input num" type="date" id="stFrom" value="${from}"></div><div class="field grow"><label for="stTo">لحد يوم</label><input class="input num" type="date" id="stTo" value="${to}"></div></div>
+    ${err ? `<div class="check warn">${err}</div>` : `<p class="sub" style="margin:0">${fmt(doc.rows.length)} شغلانة · الإجمالي ${money(doc.sub)} · المدفوع ${money(doc.paid)} · الباقي ${money(doc.due)}</p>
+    <div id="docPreview">${paperHTML(doc)}</div>`}
+  </div>
+  <div class="sheet-foot"><button class="btn primary" data-act="send-doc" ${err || !doc.rows.length ? 'disabled' : ''}>جهّز PDF وابعته</button></div>`, true);
+}
+function statementPickSheet() {
+  const ids = new Set(state.projects.filter((p) => p.stage !== 'Cancelled' && stageIdx(p.stage) >= 1).map((p) => String(p.client || '').split(' | ')[0]));
+  const list = D.clients.filter((c) => ids.has(c.id) && c.id !== 'C-001').sort((a, b) => (Number(b.remaining) || 0) - (Number(a.remaining) || 0) || String(a.name).localeCompare(String(b.name)));
+  openSheet(`<div class="sheet-head"><h2>فاتورة مجمعة لأنهي عميل؟</h2>${closeBtn}</div><div class="sheet-body"><div class="list">${list.map((c) => `<button class="li" data-act="statement" data-client="${c.id}"><span class="grow"><div class="t">${esc(c.name)}</div><div class="s"><span class="num">${c.id}</span>${c.company ? ' · ' + esc(c.company) : ''}</div></span><span class="v">${Number(c.remaining) > 0 ? 'باقي ' + money(c.remaining) : ''}</span></button>`).join('') || '<div class="li"><span class="sub">مفيش عملاء ليهم شغل.</span></div>'}</div></div>`);
 }
 let docState = null;
 function currentDoc() {
   const s = docState;
   if (s.from === 'draft') return docFromDraft(s.type, s.lang);
+  if (s.from === 'statement') return docFromStatement(s.client, s.fromD, s.toD);
   const p = state.projects.find((x) => x.id === s.id);
   return docFromProject(p, s.type, s.supplier, s.lang);
 }
@@ -1548,21 +1640,24 @@ async function makePdf(doc) {
 }
 async function sendDoc() {
   const s = docState;
-  const p = state.projects.find((x) => x.id === s.id);
+  const p = s.from === 'statement' ? null : state.projects.find((x) => x.id === s.id);
   const doc = currentDoc();
-  const c = clientOfProject(p) || {};
-  const kindAr = { quote: 'عرض السعر', invoice: 'الفاتورة', job: 'أمر الشغل' }[doc.type];
-  const fileName = `${doc.no.replace('#', 'INV-')} - ${doc.type === 'job' ? doc.supplier : doc.client.name}.pdf`.replace(/[\\/:*?"<>|]/g, ' ');
+  const c = (p ? clientOfProject(p) : clientById(s.client)) || {};
+  const kindAr = { quote: 'عرض السعر', invoice: 'الفاتورة', job: 'أمر الشغل', statement: 'الفاتورة المجمعة' }[doc.type];
+  const fileName = (doc.type === 'statement' ? `فاتورة مجمعة - ${doc.client.name} - ${doc.from} الى ${doc.to}.pdf` : `${doc.no.replace('#', 'INV-')} - ${doc.type === 'job' ? doc.supplier : doc.client.name}.pdf`).replace(/[\\/:*?"<>|]/g, ' ');
   try {
     const up = await withBusy('بيجهّز الـ PDF ويحفظه في Drive...', async () => {
       const b64 = await makePdf(doc);
-      return api('uploadFile', { kind: doc.type, name: fileName, base64: b64, mime: 'application/pdf' });
+      return api('uploadFile', { kind: doc.type === 'statement' ? 'invoice' : doc.type, name: fileName, base64: b64, mime: 'application/pdf' });
     });
     let phone, text;
     if (doc.type === 'job') {
       const sup = D.suppliers.find((x) => x.name === s.supplier) || {};
       phone = sup.whatsapp;
       text = `أهلاً، ده أمر شغل ${doc.no} من ${STUDIO.name} لمشروع ${p.id}.\nالتسليم: ${arDate(doc.until && doc.until >= TODAY ? doc.until : addDays(TODAY, 3))}\n${up.url}\nبرجاء التأكيد.`;
+    } else if (doc.type === 'statement') {
+      phone = c.mobile;
+      text = `أهلاً يا ${firstName(doc.client.name)}،\nدي الفاتورة المجمعة لشغلك من ${arDate(doc.from)} لحد ${arDate(doc.to)} من ${STUDIO.name}:\n${up.url}\nالإجمالي ${money(doc.sub)} · المدفوع ${money(doc.paid)} · ${doc.due > 0.001 ? 'الباقي ' + money(doc.due) : 'مفيش حاجة باقية، شكراً لحضرتك.'}`;
     } else {
       phone = c.mobile;
       text = doc.lang === 'en'
@@ -1570,9 +1665,11 @@ async function sendDoc() {
         : `أهلاً يا ${firstName(doc.client.name)}،\nده ${kindAr} ${doc.no} من ${STUDIO.name}:\n${up.url}\n${doc.type === 'quote' ? `العرض ساري لحد ${arDate(doc.until)}.` : ''}`;
     }
     const log = { quote: `اتبعت عرض السعر ${doc.no}`, invoice: `اتبعتت الفاتورة ${doc.no}`, job: `اتبعت أمر الشغل لـ ${s.supplier}` }[doc.type];
-    const upd = { ...p };
-    if (doc.type === 'quote' && !p.sentAt) upd.sentAt = TODAY;
-    await saveP(upd, { log }).catch(() => {});
+    if (p) {
+      const upd = { ...p };
+      if (doc.type === 'quote' && !p.sentAt) upd.sentAt = TODAY;
+      await saveP(upd, { log }).catch(() => {});
+    }
     openSheet(`<div class="sheet-head"><h2>${kindAr} جاهز</h2>${closeBtn}</div>
       <div class="sheet-body"><div class="ready"><div class="ok">✓</div><b>${esc(fileName)}</b><p class="sub" style="margin:0">اتحفظ في Drive في فولدر «Graficoo App Files».</p></div>
       ${phone ? '' : `<div class="check warn">مفيش رقم واتساب ${doc.type === 'job' ? 'للمورد ده (تاب Suppliers)' : 'للعميل ده'}، فواتساب هيفتح وتختار المحادثة بنفسك.</div>`}</div>
@@ -1758,6 +1855,9 @@ document.addEventListener('click', async (e) => {
       case 'approve': { const p = P(); const v = p.versions.length; await withBusy('بيسجّل الموافقة...', () => saveP({ ...p, approval: { v, at: TODAY + ' ' + new Date().toTimeString().slice(0, 5) } }, { log: `العميل وافق على نسخة ${v} من التصميم` })); projectSheet(p.id); return toast('اتسجلت الموافقة. تقدر تنقله للطباعة.'); }
       case 'job': return jobSheet(ds.id);
       case 'send-doc': return await sendDoc();
+      case 'statement': return statementSheet(ds.client);
+      case 'statement-pick': return statementPickSheet();
+      case 'stmt-range': return statementSheet(stmtState.cid, ds.from, ds.to);
       case 'cancel-proj': { await withBusy('بيلغي المشروع...', () => saveP({ ...P(), stage: 'Cancelled' }, { log: 'المشروع اتلغى' })); projectSheet(ds.id); render(); return toast(ds.id + ' اتلغى'); }
       case 'doc': return await openDoc({ from: 'project', type: ds.type, id: ds.id, lang: (P().snap && enMode(P().snap.market)) ? 'en' : 'ar' });
       case 'morning-preview': return morningSheet();
@@ -1768,6 +1868,7 @@ document.addEventListener('click', async (e) => {
 });
 document.addEventListener('change', async (e) => {
   const t = e.target;
+  if ((t.id === 'stFrom' || t.id === 'stTo') && stmtState) return statementSheet(stmtState.cid, $('#stFrom').value, $('#stTo').value);
   if (!t.dataset.upload) return;
   const f = t.files && t.files[0]; if (!f) return;
   const p = state.projects.find((x) => x.id === t.dataset.upload);
