@@ -349,6 +349,9 @@ select.input { appearance: auto; }
 .paper .stamp { top: 9.2em; }
 .paper .pid { font-size: .78em; color: #7a7a7e; margin-top: .15em; }
 .paper .note { font-size: .78em; color: #6a6a6e; margin: .2em 0 0; }
+.arch-fix { display: grid; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line, #2a2a2e); }
+.arch-fix:first-of-type { border-top: 0; }
+.danger-link { color: var(--red-ink, #ee2e24) !important; }
 .paper .pb { gap: .55em; padding-top: 1.2em; }
 .paper h4 { font-size: 1.25em; }
 .paper td { padding: .4em .6em; }
@@ -644,7 +647,7 @@ const ACTION_AR = { 'Keep close (VIP)': 'خليك قريب منه', 'Call — do
 const PAPER_EN = { 'كوشيه 150 جم': 'Coated 150 gsm', 'كوشيه 200 جم': 'Coated 200 gsm', 'كوشيه 250 جم': 'Coated 250 gsm', 'كوشيه 300 جم': 'Coated 300 gsm', 'فرخ ستيكر': 'Sticker sheet' };
 
 /* ---------- state ---------- */
-const state = { view: 'home', internal: false, projFilter: 'open', clientQ: '', projects: [], draft: null };
+const state = { archive: [], view: 'home', internal: false, projFilter: 'open', clientQ: '', projects: [], draft: null };
 const isStaff = () => ME && ME.role === 'staff';
 const showInternal = () => state.internal && !isStaff();
 function newDraft(client, quick) {
@@ -730,7 +733,7 @@ async function boot() {
     const B = await api('bootstrap');
     D = { items: B.items, settings: B.settings, clients: B.clients, packages: B.packages, suppliers: B.suppliers };
     E = makeEngine(D); S = D.settings; STUDIO = B.studio; APP = B.app; TODAY = B.today; ME = B.user;
-    state.projects = B.projects;
+    state.projects = B.projects; state.archive = B.archive || [];
     const saved = store.get('draft');
     try { state.draft = saved ? JSON.parse(saved) : newDraft(null); } catch (e) { state.draft = newDraft(null); }
     if (!state.draft || !Array.isArray(state.draft.lines)) state.draft = newDraft(null);
@@ -744,7 +747,7 @@ function setSyncText() { $('#syncText').textContent = APP && APP.lastExcelSync ?
 async function refresh(quiet) {
   try {
     const R = await api('refreshData');
-    D.clients = R.clients; state.projects = R.projects; TODAY = R.today; APP.lastExcelSync = R.lastExcelSync;
+    D.clients = R.clients; state.projects = R.projects; if (R.archive) state.archive = R.archive; TODAY = R.today; APP.lastExcelSync = R.lastExcelSync;
     setSyncText(); if (!$('#layer').innerHTML) render();
     if (!quiet) toast('البيانات اتحدثت');
   } catch (e) { if (!quiet) toast(e.message); }
@@ -958,10 +961,10 @@ function viewQuote() {
   const d = state.draft;
   const c = d.client;
   const head = d.quick
-    ? `<section class="block"><div class="sec-head"><h1>بيع سريع</h1><button class="link" data-act="to-normal">تسعير كامل</button></div>
+    ? `<section class="block"><div class="sec-head"><h1>${d.editing ? 'تعديل ' + d.editing : 'بيع سريع'}</h1><button class="link" data-act="to-normal">تسعير كامل</button></div>
        <div class="field"><label for="walkName">اسم العميل (اختياري)</label><input class="input" id="walkName" value="${esc(d.walkName)}" placeholder="مثال: أستاذ محمد"></div>
        <p class="sub" style="margin:0;line-height:1.7">بيتسجل على عميل Walk-in، ويطلع فاتورة مدفوعة. سجّل الفلوس في Cash Log على Excel.</p></section>`
-    : `<section class="block"><div class="sec-head"><h1>${d.from ? 'تكرار أوردر' : 'تسعير جديد'}</h1><button class="link" data-act="reset-draft">ابدأ من الأول</button></div>
+    : `<section class="block"><div class="sec-head"><h1>${d.editing ? 'تعديل ' + d.editing : d.from ? 'تكرار أوردر' : 'تسعير جديد'}</h1><button class="link" data-act="reset-draft">ابدأ من الأول</button></div>
   <button class="picker" data-act="pick-client">
     ${c ? `<span class="avatar">${esc(initials(c.name))}</span><span class="grow"><div style="font-weight:700">${esc(c.name)}</div><div class="sub">${esc(c.company || '')}${c.company ? ' · ' : ''}${esc(CITY_AR[c.city] || '')}${c.tier ? ' · ' + (TIER_AR[c.tier] || c.tier) : ''}</div></span>`
       : `<span class="avatar" style="background:var(--red);color:#fff">+</span><span class="grow"><div style="font-weight:700">اختار العميل</div><div class="sub">السوق ونوع العميل بيتظبطوا لوحدهم</div></span>`}
@@ -983,8 +986,8 @@ function viewQuote() {
   <section class="block"><div class="totals" id="totals"></div>
   <div id="checks" style="display:grid;gap:8px"></div></section>
   ${d.quick
-    ? `<button class="btn primary" data-act="save-quick">اعمل الفاتورة</button>`
-    : `<div class="btn-row"><button class="btn dark" data-act="preview-quote">معاينة العرض</button><button class="btn primary" id="saveBtn" data-act="save-quote">احفظ وابعت</button></div>`}
+    ? `<button class="btn primary" data-act="save-quick">${d.editing ? 'احفظ التعديل' : 'اعمل الفاتورة'}</button>`
+    : `<div class="btn-row"><button class="btn dark" data-act="preview-quote">معاينة العرض</button><button class="btn primary" id="saveBtn" data-act="save-quote">${d.editing ? 'احفظ التعديل' : 'احفظ وابعت'}</button></div>`}
   </aside></div>`;
 }
 
@@ -1067,7 +1070,7 @@ function updateQuoteNumbers() {
   if (q.design && inside) checks.push(`<div class="check info">ℹ ${esc(q.design)}</div>`);
   $('#checks').innerHTML = checks.join('');
   const sb = $('#saveBtn');
-  if (sb) { sb.textContent = blocked ? 'اطلب موافقة المالك' : 'احفظ وابعت'; sb.dataset.act = blocked ? 'ask-approval' : 'save-quote'; }
+  if (sb) { sb.textContent = blocked ? 'اطلب موافقة المالك' : state.draft.editing ? 'احفظ التعديل' : 'احفظ وابعت'; sb.dataset.act = blocked ? 'ask-approval' : 'save-quote'; }
   saveDraftLocal();
 }
 
@@ -1291,8 +1294,10 @@ function projectSheet(id) {
       <button class="btn dark small" data-act="doc" data-type="invoice" data-id="${p.id}" ${cancelled || i < 1 ? 'disabled' : ''}>فاتورة</button>
     </div>
     <div class="row" style="justify-content:center;gap:18px">
+      <button class="link" data-act="edit-proj" data-id="${p.id}">تعديل</button>
       <button class="link" data-act="repeat" data-id="${p.id}">كرر الأوردر ده</button>
       ${isOpen(p) && !isStaff() ? `<button class="link" style="color:var(--muted)" data-act="cancel-proj" data-id="${p.id}">إلغاء المشروع</button>` : ''}
+      ${!isStaff() ? `<button class="link danger-link" data-act="del-proj" data-id="${p.id}">مسح نهائي</button>` : ''}
     </div>
   </div>`);
 }
@@ -1300,14 +1305,96 @@ function projectSheet(id) {
 function clientSheetView(id) {
   const c = clientById(id); if (!c) return;
   const projs = state.projects.filter((p) => String(p.client || '').startsWith(c.id + ' '));
+  const oldJobs = state.archive.filter((a) => a.client === c.id).length;
   const last = [...projs].sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
   openSheet(`<div class="sheet-head"><span class="avatar">${esc(initials(c.name))}</span><div class="grow"><h2>${esc(c.name)}</h2><div class="sub">${esc(c.company || '')}</div></div>${closeBtn}</div>
   <div class="sheet-body">
     <div class="card"><dl class="kv"><dt>الموبايل</dt><dd class="num" dir="ltr">${esc(c.mobile || '—')}</dd><dt>المدينة</dt><dd>${esc(CITY_AR[c.city] || c.city || '—')}</dd><dt>التصنيف</dt><dd>${TIER_AR[c.tier] || c.tier || '—'} · ${ACT_AR[c.activity] || c.activity || ''}</dd><dt>عدد المشاريع</dt><dd class="num">${fmt(c.projects)}</dd><dt>إجمالي التعامل</dt><dd class="num">${money(c.total)}</dd><dt>المتبقي عليه</dt><dd class="num">${money(c.remaining)}</dd><dt>الخطوة الجاية</dt><dd>${esc(ACTION_AR[c.action] || c.action || '—')}</dd></dl>
     ${c.mobile ? `<a class="btn ghost small wa" style="color:#fff" href="${waLink(c.mobile, 'أهلاً يا ' + firstName(c.name) + '، معاك جرافيكوو ستوديو.')}" target="_blank" rel="noopener">كلّمه واتساب</a>` : ''}</div>
-    ${projs.length ? `<button class="btn ghost" data-act="statement" data-client="${c.id}">فاتورة مجمعة لشغله في فترة</button><section class="block"><h2>المشاريع</h2><div class="list">${projs.map(projRow).join('')}</div></section>` : ''}
+    ${projs.length || oldJobs ? `<button class="btn ghost" data-act="statement" data-client="${c.id}">فاتورة مجمعة لشغله في فترة${oldJobs ? ` (فيها ${oldJobs} شغلانة قديمة)` : ''}</button>` : ''}${projs.length ? `<section class="block"><h2>المشاريع</h2><div class="list">${projs.map(projRow).join('')}</div></section>` : ''}
   </div>
   <div class="sheet-foot">${last ? `<div class="btn-row"><button class="btn ghost" data-act="repeat" data-id="${last.id}">كرر آخر أوردر</button><button class="btn primary" data-act="quote-for" data-id="${c.id}">تسعير جديد</button></div>` : `<button class="btn primary" data-act="quote-for" data-id="${c.id}">تسعير جديد للعميل ده</button>`}</div>`);
+}
+
+/* ---------- edit / delete a project ---------- */
+function editProjSheet(id) {
+  const p = state.projects.find((x) => x.id === id); if (!p) return;
+  const cid = String(p.client || '').split(' | ')[0];
+  const stages = STAGES.map((x) => [x[0], x[1]]).concat([['Cancelled', 'ملغي']]);
+  const clients = D.clients.filter((c) => c.name).slice().sort((a, b) => String(a.name).localeCompare(String(b.name)));
+  if (!clients.some((c) => c.id === cid) && cid) clients.unshift({ id: cid, name: p.clientName || cid });
+  openSheet(`<div class="sheet-head"><div class="grow"><div class="eyebrow num">${p.id}</div><h2 style="margin-top:3px">تعديل المشروع</h2></div>${closeBtn}</div>
+  <div class="sheet-body">
+    <div class="card"><h3>البنود والمقاسات والكميات</h3><p class="sub" style="margin:0">بيفتح شاشة التسعير على بنود المشروع، تعدّل المقاس أو الكمية أو السعر وتحفظ. المشروع بيفضل بنفس رقمه ومرحلته.</p>
+      <button class="btn dark small" data-act="edit-quote" data-id="${p.id}">عدّل البنود${p.snap ? '' : ' والسعر'}</button></div>
+    <form id="editProjForm" data-id="${p.id}" class="card" style="display:grid;gap:12px">
+      <h3>بيانات المشروع</h3>
+      <div class="field"><label for="epDesc">اسم الشغلانة</label><input class="input" id="epDesc" value="${esc(p.desc || '')}"></div>
+      ${p.quick ? '' : `<div class="field"><label for="epClient">العميل</label><select class="input" id="epClient">${clients.map((c) => `<option value="${esc(c.id)}" ${c.id === cid ? 'selected' : ''}>${esc(c.name)}${c.company ? ' · ' + esc(c.company) : ''}</option>`).join('')}</select></div>`}
+      <div class="btn-row"><div class="field grow"><label for="epDate">تاريخ الاتفاق</label><input class="input num" type="date" id="epDate" value="${esc(String(p.date || '').slice(0, 10))}"></div>
+        <div class="field grow"><label for="epDelivery">التسليم</label><input class="input num" type="date" id="epDelivery" value="${esc(String(p.delivery || '').slice(0, 10))}"></div></div>
+      <div class="field"><label for="epStage">المرحلة</label><select class="input" id="epStage">${stages.map((x) => `<option value="${x[0]}" ${x[0] === p.stage ? 'selected' : ''}>${x[1]}</option>`).join('')}</select></div>
+      ${p.snap ? '' : `<div class="field"><label for="epQuote">قيمة المشروع (ج)</label><input class="input num" id="epQuote" inputmode="decimal" value="${num(p.quote) ? p.quote : ''}"></div>`}
+      <div class="field"><label for="epNotes">ملاحظات / المقاسات</label><textarea class="input" id="epNotes" rows="3">${esc(p.notes || '')}</textarea></div>
+    </form>
+  </div>
+  <div class="sheet-foot"><div class="btn-row"><button class="btn ghost" data-proj="${p.id}">رجوع</button><button class="btn primary" type="submit" form="editProjForm">احفظ البيانات</button></div></div>`);
+}
+const toLatinDigits = (x) => String(x).replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[,،\s]/g, '');
+async function saveProjInfo(id) {
+  const p = state.projects.find((x) => x.id === id); if (!p) return;
+  const v = (k) => ($('#' + k) ? $('#' + k).value.trim() : '');
+  if (!v('epDesc')) return toast('اكتب اسم الشغلانة');
+  const upd = { ...p, desc: v('epDesc'), date: v('epDate') || p.date, delivery: v('epDelivery') || p.delivery, stage: v('epStage') || p.stage, notes: v('epNotes') };
+  if (!p.quick && $('#epClient')) { const c = clientById(v('epClient')); if (c) { upd.client = pickOf(c); upd.clientName = c.name; } }
+  if ($('#epQuote')) {
+    const q = Number(toLatinDigits(v('epQuote')));
+    if (v('epQuote') === '' || !(q >= 0)) return toast('اكتب قيمة المشروع رقم');
+    upd.quote = q;
+  }
+  const labels = { desc: 'الاسم', client: 'العميل', date: 'التاريخ', delivery: 'التسليم', stage: 'المرحلة', notes: 'الملاحظات', quote: 'القيمة' };
+  const changed = Object.keys(labels).filter((k) => String(upd[k] == null ? '' : upd[k]) !== String(p[k] == null ? '' : p[k]));
+  if (!changed.length) return projectSheet(id);
+  await withBusy('بيحفظ...', () => saveP(upd, { log: 'اتعدل: ' + changed.map((k) => labels[k]).join('، ') }));
+  projectSheet(id); render(); toast('اتحفظ.');
+}
+function delProjSheet(id) {
+  const p = state.projects.find((x) => x.id === id); if (!p) return;
+  openSheet(`<div class="sheet-head"><h2>مسح ${p.id} نهائيًا؟</h2>${closeBtn}</div>
+  <div class="sheet-body">
+    <div class="card"><dl class="kv"><dt>الشغلانة</dt><dd>${esc(p.desc)}</dd><dt>العميل</dt><dd>${esc(p.clientName || '—')}</dd><dt>القيمة</dt><dd class="num">${money(p.quote)}</dd><dt>المرحلة</dt><dd>${p.stage === 'Cancelled' ? 'ملغي' : stageAr(p.stage)}</dd></dl></div>
+    <p class="sub" style="margin:0;line-height:1.8">ده للمشروع اللي اتسجل غلط: هيتشال من الأبلكيشن خالص ومش هيتحسب ملغي، وصفّه في ملف الإكسيل هيتفضى في المزامنة الجاية. نسخة منه بتتحفظ في تاب Deleted في شيت جوجل لو احتجته.</p>
+    ${Number(p.collected) > 0 ? `<div class="check warn">المشروع ده ليه تحصيل ${money(p.collected)} في Excel. امسح حركاته من Cash Log بإيدك عشان الحسابات تفضل مظبوطة.</div>` : ''}
+  </div>
+  <div class="sheet-foot"><div class="btn-row"><button class="btn ghost" data-proj="${p.id}">رجوع</button><button class="btn primary" data-act="del-proj-ok" data-id="${p.id}">امسح نهائيًا</button></div></div>`);
+}
+
+/* ---------- old jobs (archive from the old sheets) ---------- */
+const archNeed = (a) => a.total == null || a.paid == null;
+function archFixHTML(list) {
+  const val = (v) => (v == null ? '' : v);
+  return `<div class="card" style="border-color:var(--red)"><h3>ناقص معلومة (${list.length})</h3>
+    <p class="sub" style="margin:0;line-height:1.7">شغل من الشيت القديم مش معروف سعره الكلي أو المدفوع منه. اكتب اللي تعرفه واحفظ، واللي مش عارفه سيبه فاضي ويفضل «؟».</p>
+    ${list.map((r) => `<div class="arch-fix"><div><b>${esc(r.desc)}</b><div class="sub"><span class="num">${esc(r.id)}</span> · ${arDate(r.date)}${r.clientName ? ' · ' + esc(r.clientName) : ''}${r.note ? ' · ' + esc(r.note) : ''}</div></div>
+      <div class="btn-row"><div class="field grow"><label for="at-${esc(r.id)}">السعر الكلي</label><input class="input num" id="at-${esc(r.id)}" inputmode="decimal" value="${val(r.total)}" placeholder="؟"></div>
+        <div class="field grow"><label for="ap-${esc(r.id)}">المدفوع</label><input class="input num" id="ap-${esc(r.id)}" inputmode="decimal" value="${val(r.paid)}" placeholder="؟"></div>
+        <button class="btn dark small" data-act="arch-save" data-id="${esc(r.id)}" style="align-self:end">احفظ</button></div></div>`).join('')}</div>`;
+}
+function archFixSheet() {
+  const list = state.archive.filter(archNeed).sort((a, b) => b.date.localeCompare(a.date));
+  openSheet(`<div class="sheet-head"><h2>الشغل القديم الناقص</h2>${closeBtn}</div>
+  <div class="sheet-body">${list.length ? archFixHTML(list) : '<div class="check ok">✓ كل الشغل القديم مبالغه كاملة.</div>'}</div>`);
+}
+async function archSave(id) {
+  const read = (k) => { const x = toLatinDigits($('#' + k + id).value.trim()); return x === '' ? null : Number(x); };
+  const total = read('at-'), paid = read('ap-');
+  if ((total != null && !(total >= 0)) || (paid != null && !(paid >= 0))) return toast('اكتب رقم صحيح');
+  if (total != null && paid != null && paid > total) return toast('المدفوع أكبر من السعر الكلي، راجع الأرقام');
+  const saved = await withBusy('بيحفظ...', () => api('saveArchive', { id, total, paid }));
+  const i = state.archive.findIndex((a) => a.id === saved.id); if (i >= 0) state.archive[i] = saved;
+  toast('اتحفظ.');
+  if (docState && docState.from === 'statement' && $('#stFrom')) return statementSheet(docState.client, docState.fromD, docState.toD);
+  return archFixSheet();
 }
 
 function invoicePickSheet() {
@@ -1429,10 +1516,10 @@ function paperHTML(doc) {
         <div class="qr"><img class="qr-img" alt="InstaPay QR" src="${QR_IMG}"></div>
       </div>`;
   if (doc.type === 'statement') {
-    const rows = doc.rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.desc)}<div class="pid">${esc(r.id)}${r.inv ? ' · ' + esc(r.inv) : ''}</div></td><td>${arDate(r.date)}</td><td class="m">${m(r.total)}</td><td class="m">${r.paid ? m(r.paid) : '-----'}</td><td class="m">${r.rem > 0.001 ? m(r.rem) : '✓'}</td></tr>`).join('')
+    const rows = doc.rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.desc)}<div class="pid">${esc(r.id)}${r.inv ? ' · ' + esc(r.inv) : ''}</div></td><td>${arDate(r.date)}</td><td class="m">${r.total == null ? '؟' : m(r.total)}</td><td class="m">${r.paid == null ? '؟' : r.paid ? m(r.paid) : '-----'}</td><td class="m">${r.rem == null ? '؟' : r.rem > 0.001 ? m(r.rem) : '✓'}</td></tr>`).join('')
       || '<tr><td colspan="6">مفيش شغل في الفترة دي.</td></tr>';
     return `<div class="paper-wrap"><article class="paper" dir="rtl" lang="ar">${head}
-    ${doc.rows.length && doc.due <= 0.001 ? `<div class="stamp">${T.paidStamp}</div>` : ''}
+    ${doc.rows.length && doc.due <= 0.001 && !doc.unknown ? `<div class="stamp">${T.paidStamp}</div>` : ''}
     <div class="pb">
       <div class="title"><em>فاتـــورة</em> مجمّعــة</div>
       <h4>${esc(STUDIO.name)}</h4>
@@ -1454,7 +1541,7 @@ function paperHTML(doc) {
           <div class="trow due"><span>${T.due}</span><span>${m(doc.due)}</span></div>
         </div>
       </div>
-      <p class="note">المدفوعات محسوبة لحد ${arDate(doc.date)}، والأرقام بتتحدث لو الفاتورة اتعملت تاني لنفس الفترة.</p>
+      <p class="note">المدفوعات محسوبة لحد ${arDate(doc.date)}، والأرقام بتتحدث لو الفاتورة اتعملت تاني لنفس الفترة.${doc.unknown ? ` فيه ${doc.unknown} مبلغ مش معروف (؟) ومش داخل في الإجمالي.` : ''}</p>
       <div class="terms"><h4>${T.terms}</h4><ul>${termsFor(doc, 'doc').map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
       <hr>
       ${payHTML}
@@ -1516,6 +1603,10 @@ function statementProjects(cid, from, to) {
     .filter((p) => { const d = String(p.date || '').slice(0, 10); return d >= from && d <= to; })
     .sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.id.localeCompare(b.id));
 }
+function statementArchive(cid, from, to) {
+  const old = cid.indexOf('OLD:') === 0 ? cid.slice(4) : null;
+  return state.archive.filter((a) => (old ? !a.client && a.clientName === old : a.client === cid) && a.date >= from && a.date <= to);
+}
 function statementRangeError(from, to) {
   if (!from || !to) return 'اختار تاريخ البداية والنهاية.';
   if (from > to) return 'تاريخ البداية بعد تاريخ النهاية.';
@@ -1525,17 +1616,21 @@ function statementRangeError(from, to) {
 }
 const r2 = (v) => Math.round(v * 100) / 100;
 function docFromStatement(cid, from, to) {
-  const c = clientById(cid) || {};
+  const old = cid.indexOf('OLD:') === 0 ? cid.slice(4) : null;
+  const c = old ? { name: old } : clientById(cid) || {};
   const rows = statementProjects(cid, from, to).map((p) => {
     const total = Number(p.quote) || 0;
     const paid = p.quick ? total : Number(p.collected) || 0;
     return { id: p.id, inv: p.invoiceNo || '', desc: p.desc || '—', date: String(p.date || '').slice(0, 10), total, paid, rem: r2(total - paid) };
-  });
-  const sub = r2(rows.reduce((a, r) => a + r.total, 0)), paid = r2(rows.reduce((a, r) => a + r.paid, 0));
+  }).concat(statementArchive(cid, from, to).map((a) => ({
+    id: a.id, arch: true, inv: '', desc: a.desc || '—', date: a.date, total: a.total, paid: a.paid, note: a.note,
+    rem: a.total != null && a.paid != null ? r2(a.total - a.paid) : null,
+  }))).sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  const sum = (k) => r2(rows.reduce((t, r) => t + (r[k] == null ? 0 : r[k]), 0));
   return {
-    type: 'statement', lang: 'ar', cur: 'EGP', cats: [], no: 'ST-' + cid.replace('C-', '') + '-' + from.replace(/-/g, '').slice(2),
+    type: 'statement', lang: 'ar', cur: 'EGP', cats: [], no: 'ST-' + (old ? 'A' : cid.replace('C-', '')) + '-' + from.replace(/-/g, '').slice(2),
     date: TODAY, from, to, client: { name: c.name || '—', company: c.company || '—', city: CITY_AR[c.city] || c.city || '—', mobile: c.mobile },
-    rows, sub, paid, due: r2(sub - paid),
+    rows, sub: sum('total'), paid: sum('paid'), due: sum('rem'), unknown: rows.filter((r) => r.total == null || r.paid == null).length,
   };
 }
 let stmtState = null;
@@ -1545,23 +1640,27 @@ function statementSheet(cid, from, to) {
   from = from || y + '-01-01'; to = to || TODAY;
   stmtState = { cid };
   docState = { from: 'statement', type: 'statement', lang: 'ar', client: cid, fromD: from, toD: to };
-  const c = clientById(cid) || {};
+  const c = cid.indexOf('OLD:') === 0 ? { name: cid.slice(4) } : clientById(cid) || {};
   const err = statementRangeError(from, to);
   const doc = err ? null : docFromStatement(cid, from, to);
-  const presets = [['الشهر ده', thisMonth, TODAY], ['الشهر اللي فات', prevEnd.slice(0, 8) + '01', prevEnd], ['السنة دي', y + '-01-01', y + '-12-31'], ['السنة اللي فاتت', (y - 1) + '-01-01', (y - 1) + '-12-31']];
+  const presets = [['الشهر ده', thisMonth, TODAY], ['الشهر اللي فات', prevEnd.slice(0, 8) + '01', prevEnd], ['السنة دي', y + '-01-01', y + '-12-31'], ['السنة اللي فاتت', (y - 1) + '-01-01', (y - 1) + '-12-31'], ['سنة ' + (y - 2), (y - 2) + '-01-01', (y - 2) + '-12-31']];
   openSheet(`<div class="sheet-head"><div class="grow"><div class="eyebrow" style="color:#9a9a9e">فاتورة مجمعة · كل شغل العميل في فترة</div><h2 style="color:#fff;margin-top:2px">${esc(c.name || cid)}</h2></div>${closeBtn}</div>
   <div class="sheet-body">
     <div class="chips wrap">${presets.map((p) => `<button class="chip" data-act="stmt-range" data-from="${p[1]}" data-to="${p[2]}" aria-pressed="${p[1] === from && p[2] === to}">${p[0]}</button>`).join('')}</div>
     <div class="btn-row"><div class="field grow"><label for="stFrom">من يوم</label><input class="input num" type="date" id="stFrom" value="${from}"></div><div class="field grow"><label for="stTo">لحد يوم</label><input class="input num" type="date" id="stTo" value="${to}"></div></div>
     ${err ? `<div class="check warn">${err}</div>` : `<p class="sub" style="margin:0">${fmt(doc.rows.length)} شغلانة · الإجمالي ${money(doc.sub)} · المدفوع ${money(doc.paid)} · الباقي ${money(doc.due)}</p>
+    ${doc.unknown ? archFixHTML(doc.rows.filter((r) => r.arch && (r.total == null || r.paid == null))) : ''}
     <div id="docPreview">${paperHTML(doc)}</div>`}
   </div>
   <div class="sheet-foot"><button class="btn primary" data-act="send-doc" ${err || !doc.rows.length ? 'disabled' : ''}>جهّز PDF وابعته</button></div>`, true);
 }
 function statementPickSheet() {
-  const ids = new Set(state.projects.filter((p) => p.stage !== 'Cancelled' && stageIdx(p.stage) >= 1).map((p) => String(p.client || '').split(' | ')[0]));
+  const ids = new Set(state.projects.filter((p) => p.stage !== 'Cancelled' && stageIdx(p.stage) >= 1).map((p) => String(p.client || '').split(' | ')[0]).concat(state.archive.map((a) => a.client).filter(Boolean)));
+  const oldNames = {}; state.archive.filter((a) => !a.client).forEach((a) => { oldNames[a.clientName] = (oldNames[a.clientName] || 0) + 1; });
+  const need = state.archive.filter(archNeed).length;
   const list = D.clients.filter((c) => ids.has(c.id) && c.id !== 'C-001').sort((a, b) => (Number(b.remaining) || 0) - (Number(a.remaining) || 0) || String(a.name).localeCompare(String(b.name)));
-  openSheet(`<div class="sheet-head"><h2>فاتورة مجمعة لأنهي عميل؟</h2>${closeBtn}</div><div class="sheet-body"><div class="list">${list.map((c) => `<button class="li" data-act="statement" data-client="${c.id}"><span class="grow"><div class="t">${esc(c.name)}</div><div class="s"><span class="num">${c.id}</span>${c.company ? ' · ' + esc(c.company) : ''}</div></span><span class="v">${Number(c.remaining) > 0 ? 'باقي ' + money(c.remaining) : ''}</span></button>`).join('') || '<div class="li"><span class="sub">مفيش عملاء ليهم شغل.</span></div>'}</div></div>`);
+  openSheet(`<div class="sheet-head"><h2>فاتورة مجمعة لأنهي عميل؟</h2>${closeBtn}</div><div class="sheet-body">${need ? `<button class="btn ghost" data-act="arch-fix">كمّل المبالغ الناقصة في الشغل القديم (${need})</button>` : ''}<div class="list">${list.map((c) => `<button class="li" data-act="statement" data-client="${c.id}"><span class="grow"><div class="t">${esc(c.name)}</div><div class="s"><span class="num">${c.id}</span>${c.company ? ' · ' + esc(c.company) : ''}</div></span><span class="v">${Number(c.remaining) > 0 ? 'باقي ' + money(c.remaining) : ''}</span></button>`).join('') || '<div class="li"><span class="sub">مفيش عملاء ليهم شغل.</span></div>'}</div>
+    ${Object.keys(oldNames).length ? `<section class="block"><h2>أسماء من الشيت القديم</h2><p class="sub" style="margin:0">عملاء مش متسجلين في السيستم الجديد (2024 لسبتمبر 2026).</p><div class="list">${Object.keys(oldNames).sort((a, b) => a.localeCompare(b)).map((n) => `<button class="li" data-act="statement" data-client="${esc('OLD:' + n)}"><span class="grow"><div class="t">${esc(n)}</div></span><span class="v">${oldNames[n]} شغلانة</span></button>`).join('')}</div></section>` : ''}</div>`);
 }
 let docState = null;
 function currentDoc() {
@@ -1715,7 +1814,24 @@ function projectFromDraft(stage) {
     margin: q.margin, log: [], versions: [], approval: null, needsApproval: '', quick: d.quick, sentAt: '', lastFollow: '',
   };
 }
+/** Saving an edited project: same number, stage, dates, documents and history; only the items/price change. */
+async function saveEdit(askApproval) {
+  const d = state.draft, q = E.quote(d);
+  const old = state.projects.find((x) => x.id === d.editing);
+  if (!old) { state.draft.editing = null; return toast('المشروع ده مبقاش موجود'); }
+  if (!d.lines.length || !q.sub) return toast('ضيف بند واحد على الأقل بكمية');
+  if (!d.quick && !d.client) { toast('اختار العميل الأول'); return clientSheet(); }
+  const p = projectFromDraft(old.stage);
+  ['id', 'date', 'delivery', 'log', 'quoteNo', 'invoiceNo', 'versions', 'approval', 'sentAt', 'lastFollow', 'createdBy'].forEach((k) => { if (old[k] !== undefined) p[k] = old[k]; });
+  p.quick = !!old.quick;
+  p.needsApproval = askApproval ? 'pending' : (old.needsApproval === 'pending' ? 'approved' : (old.needsApproval || ''));
+  const what = old.quote !== p.quote ? `اتعدلت البنود والسعر (${money(old.quote)} ← ${money(p.quote)})` : 'اتعدلت البنود';
+  const saved = await withBusy('بيحفظ التعديل...', () => saveP(p, { log: askApproval ? 'اتعدل واتطلبت موافقة المالك على السعر' : what }));
+  state.draft = newDraft(null); saveDraftLocal();
+  go('projects'); projectSheet(saved.id); toast('التعديل اتحفظ.');
+}
 async function saveQuote(askApproval) {
+  if (state.draft.editing) return saveEdit(askApproval);
   const d = state.draft, q = E.quote(d);
   if (!d.client) { toast('اختار العميل الأول'); return clientSheet(); }
   if (!d.lines.length || !q.sub) return toast('ضيف بند واحد على الأقل بكمية');
@@ -1729,6 +1845,7 @@ async function saveQuote(askApproval) {
   openDoc({ from: 'project', type: 'quote', id: saved.id, lang: enMode(saved.market) ? 'en' : 'ar' });
 }
 async function saveQuick() {
+  if (state.draft.editing) return saveEdit(false);
   const d = state.draft, q = E.quote(d);
   if (!d.lines.length || !q.sub) return toast('ضيف بند واحد على الأقل بكمية');
   const p = projectFromDraft('7 - Delivered');
@@ -1753,6 +1870,7 @@ function repeatOrder(id, edit) {
   state.draft = newDraft(c && c.id !== 'C-001' ? c : null);
   state.draft.from = edit ? null : p.id;
   state.draft.editing = edit ? p.id : null;
+  if (edit && p.quick) { state.draft.quick = true; state.draft.client = clientById('C-001') || null; state.draft.walkName = p.clientName === 'Walk-in' ? '' : (p.clientName || ''); }
   state.draft.desc = p.desc;
   if (p.snap) {
     state.draft.market = p.snap.market; state.draft.ctype = p.snap.ctype; state.draft.extraPct = p.snap.extraPct || 0;
@@ -1856,6 +1974,15 @@ document.addEventListener('click', async (e) => {
       case 'job': return jobSheet(ds.id);
       case 'send-doc': return await sendDoc();
       case 'statement': return statementSheet(ds.client);
+      case 'arch-fix': return archFixSheet();
+      case 'arch-save': return await archSave(ds.id);
+      case 'edit-proj': return editProjSheet(ds.id);
+      case 'del-proj': return delProjSheet(ds.id);
+      case 'del-proj-ok': {
+        await withBusy('بيمسح...', () => api('deleteProject', ds.id));
+        state.projects = state.projects.filter((x) => x.id !== ds.id);
+        closeSheet(); render(); return toast(ds.id + ' اتمسح نهائيًا.');
+      }
       case 'statement-pick': return statementPickSheet();
       case 'stmt-range': return statementSheet(stmtState.cid, ds.from, ds.to);
       case 'cancel-proj': { await withBusy('بيلغي المشروع...', () => saveP({ ...P(), stage: 'Cancelled' }, { log: 'المشروع اتلغى' })); projectSheet(ds.id); render(); return toast(ds.id + ' اتلغى'); }
@@ -1884,6 +2011,7 @@ document.addEventListener('change', async (e) => {
   } catch (er) { /* shown */ }
 });
 document.addEventListener('submit', async (e) => {
+  if (e.target.id === 'editProjForm') { e.preventDefault(); try { await saveProjInfo(e.target.dataset.id); } catch (er) { /* shown */ } return; }
   if (e.target.id !== 'newClientForm') return;
   e.preventDefault();
   const v = (id) => $('#' + id).value.trim();
