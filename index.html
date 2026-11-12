@@ -334,6 +334,28 @@ select.input { appearance: auto; }
 .paper .slogan span { white-space: nowrap; }
 .paper .qr { padding: .7em; }
 .paper .qr .qr-img { width: 100%; height: auto; display: block; border-radius: .5em; background: #fff; }
+.paper .tot2 { display: flex; justify-content: flex-end; }
+.paper .tot2 .trows { width: 21em; }
+.paper .trow.disc span:last-child { color: var(--paper-red); }
+.paper .terms { display: grid; gap: .35em; }
+.paper .terms h4 { font-size: 1.15em; }
+.paper .terms ul { font-size: .82em; line-height: 1.45; display: block; columns: 2; column-gap: 2.2em; }
+.paper .terms li { break-inside: avoid; margin-bottom: .25em; }
+.paper .pb { gap: .8em; }
+.paper hr { margin: 0; }
+.paper .ph { margin-top: 1.8em; height: 6.8em; }
+.paper .title { font-size: 2.3em; }
+.paper { font-size: 1.8cqw; }
+.paper .stamp { top: 9.2em; }
+.paper .pb { gap: .55em; padding-top: 1.2em; }
+.paper h4 { font-size: 1.25em; }
+.paper td { padding: .4em .6em; }
+.paper th { padding: .4em .6em; }
+.paper .pay { grid-template-columns: 1fr 8.5em; }
+.paper .qr { padding: .6em; }
+.paper .foot { padding: 1em 3em 1.3em; }
+.paper .grid2 { gap: .35em 1em; }
+
 
 /* ===== one app, every screen: phone (default) → iPad portrait (≥700px) → iPad landscape (≥1024px) ===== */
 .home-cols, .quote-layout, .q-main, .q-side { display: grid; gap: 22px; align-content: start; min-width: 0; }
@@ -1343,7 +1365,24 @@ function linesFromSnap(snap, lang) {
   });
   const sub = lines.reduce((a, l) => a + (num(l.total) ? l.total : 0), 0);
   const disc = conv(q.disc);
-  return { lines, sub, disc, total: Math.round((sub - disc) * 100) / 100, cur: usd ? 'USD' : 'EGP' };
+  const cats = [...new Set(snap.lines.map((l) => (l.fixed ? l.cat : (E.byName[l.item] || {}).cat)).filter(Boolean))];
+  const discPct = q.disc ? (S.tiers[snap.ctype] || 0) + (snap.extraPct || 0) : 0;
+  return { lines, sub, disc, discPct, cats, total: Math.round((sub - disc) * 100) / 100, cur: usd ? 'USD' : 'EGP' };
+}
+// projects recorded before the app have no item lines: guess the category from the service type
+const SERVICE_CAT = { 'In/Out Printing': 'طباعة بالمتر', 'Offset Printing': 'كروت أوفست', 'Digital Printing': 'ديجيتال', 'Cladding': 'كلادينج وحروف', 'Design Only': 'خدمات التصميم', 'Branding & Logo': 'خدمات التصميم', 'Social Media': 'خدمات التصميم', 'Packaging': 'شنط قماش' };
+/** Terms for this document: general ones + the ones whose category is in the order. */
+function termsFor(doc, kindWanted) {
+  const all = STUDIO.termsAll;
+  const en = doc.lang === 'en';
+  if (!all || !all.length) {   // older sheet without the per-category Terms tab
+    if (kindWanted === 'payment') return en ? STUDIO.payTermsEn : STUDIO.payTerms;
+    return en ? STUDIO.termsEn : STUDIO.terms;
+  }
+  const cats = doc.cats || [];
+  const fits = (t) => t.applies === 'all' || t.applies.split(/\s*[,،]\s*/).some((c) => cats.includes(c));
+  const kinds = kindWanted === 'payment' ? ['payment'] : ['doc', doc.type];
+  return all.filter((t) => kinds.includes(t.kind) && fits(t)).map((t) => (en ? t.en || t.ar : t.ar || t.en)).filter(Boolean);
 }
 function docFromDraft(type, lang) {
   const d = state.draft, c = d.client || {};
@@ -1359,7 +1398,7 @@ function docFromProject(p, type, supplier, lang) {
   const c = clientOfProject(p) || {};
   let L;
   if (p.snap) L = linesFromSnap(p.snap, lang);
-  else L = { lines: [{ desc: p.desc, qty: p.notes ? p.notes : '1', price: lang === 'en' ? 'EGP ' + fmt(p.quote) : money(p.quote), total: p.quote, job: '', item: p.desc }], sub: p.quote, disc: 0, total: p.quote, cur: 'EGP' };
+  else L = { lines: [{ desc: p.desc, qty: p.notes ? p.notes : '1', price: lang === 'en' ? 'EGP ' + fmt(p.quote) : money(p.quote), total: p.quote, job: '', item: p.desc }], sub: p.quote, disc: 0, discPct: 0, cats: SERVICE_CAT[p.service] ? [SERVICE_CAT[p.service]] : [], total: p.quote, cur: 'EGP' };
   const quote = type === 'quote';
   const paidEgp = p.quick ? null : (p.collected || 0);
   const paid = p.quick ? L.total : L.cur === 'USD' ? Math.round((paidEgp / S.usd) * 100) / 100 : paidEgp;
@@ -1375,8 +1414,8 @@ function paperHTML(doc) {
   const inv = doc.type === 'invoice', job = doc.type === 'job';
   const m = (v) => (num(v) ? (doc.cur === 'USD' ? '$' + fmt(v, 2) : en ? 'EGP ' + fmt(v) : fmt(v) + 'ج') : '—');
   const T = en
-    ? { qt: '<em>Price</em> Quotation', inv: '<em>Sales</em> Invoice', addr: 'Address', mob: 'Mobile', mail: 'Email', no: inv ? 'Invoice No.' : 'Quote No.', issued: 'Issue date', until: inv ? 'Due date' : 'Valid until', to: 'To', co: 'Company', ca: 'Address', svc: 'Services', th: ['#', 'Description', 'Qty / Size', 'Price', 'Total'], sub: 'Subtotal', disc: 'Discount', paid: 'Paid', due: 'Amount due', pay: 'Payment details', paidStamp: 'PAID IN FULL' }
-    : { qt: '<em>بيـــان</em> أسعــار', inv: '<em>فاتـــورة</em> مبيعــات', addr: 'العنوان', mob: 'الموبايل', mail: 'البريد', no: inv ? 'رقم الفاتورة' : 'رقم العرض', issued: 'تاريخ الإصدار', until: inv ? 'تاريخ الاستحقاق' : 'تاريخ الصلاحية', to: 'إلي', co: 'الشركة', ca: 'العنوان', svc: 'وصف الخدمات:', th: ['الرقم', 'الوصف', 'الكمية/المقاس', 'السعر', 'الإجمالي'], sub: 'الإجمالي', disc: 'الخصم', paid: 'مدفوع', due: 'إجمالي الإستحقاق', pay: 'تفاصيل الدفع:', paidStamp: 'مدفوعة بالكامل' };
+    ? { qt: '<em>Price</em> Quotation', inv: '<em>Sales</em> Invoice', addr: 'Address', mob: 'Mobile', mail: 'Email', no: inv ? 'Invoice No.' : 'Quote No.', issued: 'Issue date', until: inv ? 'Due date' : 'Valid until', to: 'To', co: 'Company', ca: 'Address', svc: 'Services', th: ['#', 'Description', 'Qty / Size', 'Price', 'Total'], sub: 'Subtotal', disc: 'Discount', paid: 'Paid', due: 'Amount due', pay: 'Payment details', terms: 'Terms & conditions', paidStamp: 'PAID IN FULL' }
+    : { qt: '<em>بيـــان</em> أسعــار', inv: '<em>فاتـــورة</em> مبيعــات', addr: 'العنوان', mob: 'الموبايل', mail: 'البريد', no: inv ? 'رقم الفاتورة' : 'رقم العرض', issued: 'تاريخ الإصدار', until: inv ? 'تاريخ الاستحقاق' : 'تاريخ الصلاحية', to: 'إلي', co: 'الشركة', ca: 'العنوان', svc: 'وصف الخدمات:', th: ['الرقم', 'الوصف', 'الكمية/المقاس', 'السعر', 'الإجمالي'], sub: 'الإجمالي', disc: 'الخصم', paid: 'مدفوع', due: 'إجمالي الإستحقاق', pay: 'تفاصيل الدفع:', terms: 'الشروط والأحكام:', paidStamp: 'مدفوعة بالكامل' };
   const date = en ? enDate : arDate;
   const due = inv ? doc.total - (doc.paid || 0) : doc.total;
   const head = `<div class="ph"><img alt="Graficoo Studio" src="${LOGO_WHITE}"></div><div class="redline"></div>`;
@@ -1394,7 +1433,7 @@ function paperHTML(doc) {
     </div>${foot}</article></div>`;
   }
   const rows = doc.lines.map((l, i) => `<tr><td>${i + 1}</td><td>${esc(l.desc)}</td><td>${esc(l.qty)}</td><td class="m">${esc(l.price)}</td><td class="m">${m(l.total)}</td></tr>`).join('');
-  const pad = Math.max(0, 5 - doc.lines.length);
+  const pad = Math.max(0, 3 - doc.lines.length);
   const empty = Array.from({ length: pad }, (_, k) => `<tr><td>${doc.lines.length + k + 1}</td><td></td><td></td><td></td><td></td></tr>`).join('');
   return `<div class="paper-wrap"><article class="paper" dir="${en ? 'ltr' : 'rtl'}" lang="${en ? 'en' : 'ar'}">
     ${head}
@@ -1413,19 +1452,20 @@ function paperHTML(doc) {
       <hr>
       <h4>${T.svc}</h4>
       <table><thead><tr>${T.th.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows}${empty}</tbody></table>
-      <div class="tot">
-        <ul>${(en ? STUDIO.termsEn : STUDIO.terms).map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
-        <div>
+      <div class="tot2">
+        <div class="trows">
           <div class="trow"><span>${T.sub}</span><span>${m(doc.sub)}</span></div>
-          <div class="trow"><span>${inv ? T.paid : T.disc}</span><span>${inv ? m(doc.paid) : doc.disc ? m(doc.disc) : '-----'}</span></div>
+          ${doc.disc ? `<div class="trow disc"><span>${T.disc}${doc.discPct ? ` (${Math.round(doc.discPct * 100)}%)` : ''}</span><span>− ${m(doc.disc)}</span></div>` : ''}
+          ${inv ? `<div class="trow"><span>${T.paid}</span><span>${doc.paid ? m(doc.paid) : '-----'}</span></div>` : ''}
           <div class="trow due"><span>${T.due}</span><span>${m(due)}</span></div>
         </div>
       </div>
+      <div class="terms"><h4>${T.terms}</h4><ul>${termsFor(doc, 'doc').map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
       <hr>
       <h4>${T.pay}</h4>
       <div class="pay">
         <div style="display:grid;gap:.4em">${STUDIO.pay.map((p) => `<div class="kvp ltr"><span>${esc(en ? p[1] : p[0])}</span><span>${esc(en ? p[2].replace('البنك الأهلي المصري', 'National Bank of Egypt') : p[2])}</span></div>`).join('')}
-          <ul style="margin-top:.4em">${(en ? STUDIO.payTermsEn : STUDIO.payTerms).map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
+          <ul style="margin-top:.4em">${termsFor(doc, 'payment').map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>
         <div class="qr"><img class="qr-img" alt="InstaPay QR" src="${QR_IMG}"></div>
       </div>
     </div>
@@ -1471,15 +1511,39 @@ async function makePdf(doc) {
   stage.innerHTML = paperHTML(doc);
   const el = stage.querySelector('.paper');
   await Promise.all([...el.querySelectorAll('img')].map((im) => (im.complete ? 0 : new Promise((r) => { im.onload = im.onerror = r; }))));
+  // places where a page may end without cutting through a row or a line of text
+  const top0 = el.getBoundingClientRect().top;
+  const cssH = el.getBoundingClientRect().height, cssW = el.getBoundingClientRect().width;
+  const breaks = [...el.querySelectorAll('.pb > *, tr, li, .foot')].map((n) => n.getBoundingClientRect().bottom - top0).filter((y) => y > 0).sort((a, b) => a - b);
   const canvas = await html2canvas(el, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
   stage.innerHTML = '';
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'portrait', compress: true });
   const W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight();
-  const ratio = canvas.height / canvas.width;
-  let w = W, h = W * ratio;
-  if (h > H) { h = H; w = H / ratio; }
-  pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', (W - w) / 2, 0, w, h);
+  const pageCss = cssW * (H / W);             // one A4 page, in screen pixels of the paper
+  const k = canvas.height / cssH;             // canvas pixels per screen pixel
+  if (cssH <= pageCss * 1.3) {               // fits (or nearly): one page, shrink slightly if needed
+    const ratio = canvas.height / canvas.width;
+    let w = W, h = W * ratio;
+    if (h > H) { h = H; w = H / ratio; }
+    pdf.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', (W - w) / 2, 0, w, h);
+  } else {                                    // longer: continue on more pages, cutting between rows
+    let start = 0, first = true;
+    while (start < cssH - 1) {
+      let end = Math.min(cssH, start + pageCss);
+      if (end < cssH) {
+        const ok = breaks.filter((y) => y > start + pageCss * 0.4 && y <= end);
+        if (ok.length) end = ok[ok.length - 1];
+      }
+      const part = document.createElement('canvas');
+      part.width = canvas.width; part.height = Math.round((end - start) * k);
+      const g = part.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, part.width, part.height);
+      g.drawImage(canvas, 0, Math.round(start * k), canvas.width, part.height, 0, 0, canvas.width, part.height);
+      if (!first) pdf.addPage();
+      pdf.addImage(part.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, W, W * (part.height / part.width));
+      first = false; start = end;
+    }
+  }
   return pdf.output('datauristring').split(',')[1];
 }
 async function sendDoc() {
