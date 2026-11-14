@@ -1121,24 +1121,34 @@ function closeSheet() { $('#layer').innerHTML = ''; }
 const closeBtn = `<button class="icon-btn" data-act="close" aria-label="إغلاق">${ICON.close}</button>`;
 
 let itemCat = 'الكل', itemQ = '';
+// search that forgives spelling: أ/إ/ا، ة/ه، ى/ي، spaces ("اندور" = "إن دور"), Arabic digits
+const normAr = (x) => String(x || '').toLowerCase().replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/[ًٌٍَُِّْـ]/g, '').replace(/[\s\-_.×x*+/()]+/g, '');
 function itemSheet() {
+  itemCat = 'الكل'; itemQ = '';   // always open on the full list
   const cats = ['الكل', ...new Set(D.items.map((i) => i.cat))];
   openSheet(`<div class="sheet-head"><h2>قايمة الأسعار</h2>${closeBtn}</div>
   <div class="sheet-body">
     <div class="block"><input class="input" id="itemSearch" type="search" placeholder="دوّر: بانر، كارت، ختم..." value="${esc(itemQ)}" autocomplete="off">
-    <div class="chips">${cats.map((c) => `<button class="chip" data-icat="${esc(c)}" aria-pressed="${c === itemCat}">${esc(c)}</button>`).join('')}</div></div>
+    <div class="chips wrap">${cats.map((c) => `<button class="chip" data-icat="${esc(c)}" aria-pressed="${c === itemCat}">${esc(c)}</button>`).join('')}</div></div>
     <div class="list" id="itemList"></div>
   </div>`);
   fillItems();
 }
 function fillItems() {
   const m = E.MARKETS.find((x) => x.k === state.draft.market);
-  const q = itemQ.trim();
-  const list = D.items.filter((i) => (itemCat === 'الكل' || i.cat === itemCat) && (!q || i.name.includes(q) || String(i.cat).includes(q)));
-  $('#itemList').innerHTML = list.map((i) => {
+  const stem = (w) => (w.length > 3 ? w.replace(/(ات|ه)$/, '') : w);   // روشته = روشتات، شنطه = شنطة
+  const words = itemQ.trim().split(/\s+/).map(normAr).filter(Boolean).map(stem);
+  const whole = stem(normAr(itemQ));
+  const hay = (i) => normAr(i.name) + '|' + normAr(i.cat) + '|' + normAr(i.en);
+  const inCat = D.items.filter((i) => itemCat === 'الكل' || i.cat === itemCat);
+  const exact = whole ? inCat.filter((i) => hay(i).includes(whole)) : inCat;   // the whole phrase first ("ان دور" = إن دور only)
+  const list = exact.length || !whole ? exact : inCat.filter((i) => words.every((w) => hay(i).includes(w)));
+  let lastCat = null;
+  const head = (i) => { if (itemCat !== 'الكل' || i.cat === lastCat) return ''; lastCat = i.cat; return `<div class="sub" style="font-weight:700;padding:10px 4px 2px">${esc(i.cat)}</div>`; };
+  $('#itemList').innerHTML = list.map((i) => head(i) + (() => {
     const p = state.draft.ctype === 'Office' && num(i.office) ? i.office : i[m.col];
     return `<button class="li" data-item="${esc(i.name)}"><span class="grow"><div class="t" style="white-space:normal">${esc(i.name)}</div><div class="s">${esc(i.cat)} · ${esc(unitPhrase(i.unit))}${showInternal() && num(i.eff) ? ` · تكلفة ${money(i.eff)}` : ''}</div></span><span class="v">${num(p) ? money(p) : '<span class="tag">غير متاح</span>'}</span></button>`;
-  }).join('') || '<div class="li"><span class="sub">مفيش صنف بالاسم ده.</span></div>';
+  })()).join('') || '<div class="li"><span class="sub">مفيش صنف بالاسم ده. جرّب كلمة واحدة (مثلاً: شنطة، أكريليك، دور) أو اختار القسم.</span></div>';
 }
 
 function packageSheet() {
