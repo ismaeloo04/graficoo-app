@@ -350,6 +350,8 @@ select.input { appearance: auto; }
 .paper .stamp { top: 9.2em; }
 .paper .pid { font-size: .78em; color: #7a7a7e; margin-top: .15em; }
 .paper .note { font-size: .78em; color: #6a6a6e; margin: .2em 0 0; }
+.line-head .det { margin: 6px 0 0; padding-inline-start: 16px; font-size: 12px; color: var(--muted); font-weight: 500; line-height: 1.65; }
+.paper td .note { line-height: 1.55; font-weight: 400; text-align: start; margin-top: .35em; }
 .arch-fix { display: grid; gap: 8px; padding: 10px 0; border-top: 1px solid var(--line, #2a2a2e); }
 .arch-fix:first-of-type { border-top: 0; }
 .danger-link { color: var(--red-ink, #ee2e24) !important; }
@@ -851,7 +853,7 @@ function waLink(phone, text) { const n = waNumber(phone); return 'https://wa.me/
   if (!num(q)) return '—';
   const m = /^لكل ([\d,]+) (.+)$/.exec(u || '');
   if (m) return fmt(q * Number(m[1].replace(/,/g, ''))) + ' ' + m[2];
-  const map = { 'متر': 'متر', 'للقطعة': 'قطعة', 'للساعة': 'ساعة', 'للتصميم': 'تصميم', 'للكلمة/المقاس': 'كلمة/مقاس' };
+  const map = { 'متر': 'متر', 'للقطعة': 'قطعة', 'للساعة': 'ساعة', 'للتصميم': 'تصميم', 'للباقة': 'باقة', 'للكلمة/المقاس': 'كلمة/مقاس' };
   return fmt(q, 2) + ' ' + (map[u] || '');
 }/*/i18n-skip*/
 /*i18n-skip*/function qtyTextEn(q, u) {
@@ -859,10 +861,12 @@ function waLink(phone, text) { const n = waNumber(phone); return 'https://wa.me/
   const m = /^لكل ([\d,]+) (.+)$/.exec(u || '');
   const en = { 'كارت': 'cards', 'دفاتر': 'pads', 'شنطة': 'bags' };
   if (m) return fmt(q * Number(m[1].replace(/,/g, ''))) + ' ' + (en[m[2]] || '');
-  const map = { 'متر': 'm²', 'للقطعة': 'pcs', 'للساعة': 'hrs', 'للتصميم': 'design', 'للكلمة/المقاس': 'unit' };
+  const map = { 'متر': 'm²', 'للقطعة': 'pcs', 'للساعة': 'hrs', 'للتصميم': 'design', 'للباقة': 'package', 'للكلمة/المقاس': 'unit' };
   return fmt(q, 2) + ' ' + (map[u] || '');
 }/*/i18n-skip*/
-const unitEn = (u) => ({ 'متر': '/ m²', 'لكل 1,000 كارت': '/ 1,000 cards', 'لكل 10 دفاتر': '/ 10 pads', 'لكل 500 شنطة': '/ 500 bags', 'للقطعة': '/ pc', 'للساعة': '/ hr', 'للتصميم': '/ design', 'للكلمة/المقاس': '/ unit' }[u] || '');
+const unitEn = (u) => ({ 'متر': '/ m²', 'لكل 1,000 كارت': '/ 1,000 cards', 'لكل 10 دفاتر': '/ 10 pads', 'لكل 500 شنطة': '/ 500 bags', 'للقطعة': '/ pc', 'للساعة': '/ hr', 'للتصميم': '/ design', 'للباقة': '/ package', 'للكلمة/المقاس': '/ unit' }[u] || '');
+// what a tier includes (logo / identity / clinic packs): Price List columns AF/AG, one point per line; the first line is the short summary
+const itemDetails = (it, en) => String((it && (en ? it.detailsEn : it.details)) || '').split(/[\r\n]+/).map((x) => x.trim()).filter(Boolean);
 const eyesSVG = (fill = 'currentColor') => `<svg viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="${fill}" stroke-width="9"><circle cx="34" cy="64" r="21"/><circle cx="66" cy="40" r="21"/></g><g fill="${fill}"><circle cx="39" cy="66" r="7.5"/><circle cx="71" cy="41" r="7.5"/></g><circle cx="69" cy="8" r="5" fill="none" stroke="${fill}" stroke-width="3.6"/></svg>`;
 const ICON = {
   plus: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
@@ -1092,7 +1096,7 @@ function lineCard(l, i) {
   const it = E.byName[l.item];
   const pkg = it && it.rule === 'Package';
   return `<div class="line" data-line="${i}">
-    <div class="line-head"><span class="n">${String(i + 1).padStart(2, '0')}</span><div class="name">${esc(l.item)}<div class="meta">${esc(it ? it.cat : TR('الصنف اتشال من القايمة'))} · ${esc(it ? unitPhrase(it.unit) : '')}${l.note ? ' · ' + esc(l.note) : ''}</div></div>
+    <div class="line-head"><span class="n">${String(i + 1).padStart(2, '0')}</span><div class="name">${esc(l.item)}<div class="meta">${esc(it ? it.cat : TR('الصنف اتشال من القايمة'))} · ${esc(it ? unitPhrase(it.unit) : '')}${l.note ? ' · ' + esc(l.note) : ''}</div>${itemDetails(it).length ? `<ul class="det">${itemDetails(it, LANG === 'en').slice(1).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}</div>
       <button class="icon-btn" data-act="toggle-line" data-i="${i}" aria-expanded="${!!open}" title="${TR("تفاصيل")}">${ICON.chev(open)}</button>
       <button class="icon-btn" data-act="del-line" data-i="${i}" title="${TR("امسح")}">${ICON.trash}</button></div>
     <div class="line-grid">
@@ -1178,7 +1182,7 @@ function fillItems() {
   const stem = (w) => (w.length > 3 ? w.replace(/(ات|ه)$/, '') : w);   // روشته = روشتات، شنطه = شنطة
   const words = itemQ.trim().split(/\s+/).map(normAr).filter(Boolean).map(stem);
   const whole = stem(normAr(itemQ));
-  const hay = (i) => normAr(i.name) + '|' + normAr(i.cat) + '|' + normAr(i.en);
+  const hay = (i) => normAr(i.name) + '|' + normAr(i.cat) + '|' + normAr(i.en) + '|' + normAr(itemDetails(i)[0]);
   const inCat = D.items.filter((i) => itemCat === 'الكل' || i.cat === itemCat);
   const exact = whole ? inCat.filter((i) => hay(i).includes(whole)) : inCat;   // the whole phrase first ("ان دور" = إن دور only)
   const list = exact.length || !whole ? exact : inCat.filter((i) => words.every((w) => hay(i).includes(w)));
@@ -1186,7 +1190,7 @@ function fillItems() {
   const head = (i) => { if (itemCat !== 'الكل' || i.cat === lastCat) return ''; lastCat = i.cat; return `<div class="sub" style="font-weight:700;padding:10px 4px 2px">${esc(i.cat)}</div>`; };
   $('#itemList').innerHTML = list.map((i) => head(i) + (() => {
     const p = state.draft.ctype === 'Office' && num(i.office) ? i.office : i[m.col];
-    return `<button class="li" data-item="${esc(i.name)}"><span class="grow"><div class="t" style="white-space:normal">${esc(i.name)}</div><div class="s">${esc(i.cat)} · ${esc(unitPhrase(i.unit))}${showInternal() && num(i.eff) ? ` · ${TR("تكلفة")} ${money(i.eff)}` : ''}</div></span><span class="v">${num(p) ? money(p) : TR('<span class="tag">غير متاح</span>')}</span></button>`;
+    return `<button class="li" data-item="${esc(i.name)}"><span class="grow"><div class="t" style="white-space:normal">${esc(i.name)}</div><div class="s">${esc(i.cat)} · ${esc(unitPhrase(i.unit))}${showInternal() && num(i.eff) ? ` · ${TR("تكلفة")} ${money(i.eff)}` : ''}</div>${itemDetails(i, LANG === 'en')[0] ? `<div class="s" style="white-space:normal;margin-top:2px">${esc(itemDetails(i, LANG === 'en')[0])}</div>` : ''}</span><span class="v">${num(p) ? money(p) : TR('<span class="tag">غير متاح</span>')}</span></button>`;
   })()).join('') || TR('<div class="li"><span class="sub">مفيش صنف بالاسم ده. جرّب كلمة واحدة (مثلاً: شنطة، أكريليك، دور) أو اختار القسم.</span></div>');
 }
 
@@ -1748,7 +1752,7 @@ const enMode = (market) => market === 'International';
     const it = r.it || {};
     const desc = lang === 'en' ? (it.en || l.item) + (l.note ? ' - ' + l.note : '') : l.item + (l.note ? ' - ' + l.note : '');
     const pr = num(r.price) ? (lang === 'en' ? cur(r.price) + ' ' + unitEn(it.unit) : fmt(r.price) + 'ج ' + unitPhrase(it.unit)) + (r.extraBilled ? ' + ' + cur(r.extraBilled) : '') : '—';
-    return { desc, qty: r.ok ? (lang === 'en' ? qtyTextEn(r.q, it.unit) : qtyText(r.q, it.unit)) : '—', price: pr, total: conv(r.total), job: l.note || '', item: l.item };
+    return { desc, details: itemDetails(it, lang === 'en').slice(1), qty: r.ok ? (lang === 'en' ? qtyTextEn(r.q, it.unit) : qtyText(r.q, it.unit)) : '—', price: pr, total: conv(r.total), job: l.note || '', item: l.item };
   });
   const sub = lines.reduce((a, l) => a + (num(l.total) ? l.total : 0), 0);
   const disc = conv(q.disc);
@@ -1859,7 +1863,7 @@ function docFromProject(p, type, supplier, lang) {
       <div class="jobbox"><b>برجاء:</b><ul><li>مراجعة المقاسات والكميات قبل التنفيذ والرد على نفس الرسالة بالتأكيد.</li><li>أي اختلاف في الخامة أو المقاس يتبلغ قبل الطباعة.</li><li>التسليم في الميعاد المكتوب فوق.</li></ul></div>
     </div>${foot}</article></div>`;
   }
-  const rows = doc.lines.map((l, i) => `<tr><td>${i + 1}</td><td>${esc(l.desc)}</td><td>${esc(l.qty)}</td><td class="m">${esc(l.price)}</td><td class="m">${m(l.total)}</td></tr>`).join('');
+  const rows = doc.lines.map((l, i) => `<tr><td>${i + 1}</td><td>${esc(l.desc)}${l.details && l.details.length ? `<div class="note">${l.details.map((x) => '• ' + esc(x)).join('<br>')}</div>` : ''}</td><td>${esc(l.qty)}</td><td class="m">${esc(l.price)}</td><td class="m">${m(l.total)}</td></tr>`).join('');
   const pad = Math.max(0, 3 - doc.lines.length);
   const empty = Array.from({ length: pad }, (_, k) => `<tr><td>${doc.lines.length + k + 1}</td><td></td><td></td><td></td><td></td></tr>`).join('');
   return `<div class="paper-wrap"><article class="paper" dir="${en ? 'ltr' : 'rtl'}" lang="${en ? 'en' : 'ar'}">
