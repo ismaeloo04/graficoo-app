@@ -535,7 +535,7 @@ function makeEngine(D) {
     const status = margin < lim ? { lvl: 'bad', t: _L('أقل من الحد الأدنى') } : margin < target(cost) ? { lvl: 'warn', t: _L('مقبول — أقل من الهامش المستهدف') } : { lvl: 'ok', t: _L('تمام') };
     return { design, price, min, margin, status, usd: market === 'International' ? ceilTo(price / S.usd, 0.5) : null };
   }
-  function digital(o, market) {
+  function digital(o, market, ctype) {   // office / colleague clients get the office rule, like the custom calculator
     const G = S.digital;
     const w = +o.w, h = +o.h, qty = +o.qty;
     if (!(w > 0 && h > 0 && qty > 0)) return null;
@@ -548,7 +548,7 @@ function makeEngine(D) {
     const lam = o.lam ? sheets * G.lam : 0;
     const cut = sheets < G.freeCut ? 0 : sheets < 20 ? G.cut1 : G.cut2;
     const cost = paperCost + lam + cut + (+o.prep || 0);
-    const p = priceFromCost(cost, market, +o.hours || 0, 'Regular');
+    const p = priceFromCost(cost, market, +o.hours || 0, ctype === 'Office' ? 'Office' : 'Regular');
     return { perSheet, sheets, sheetPrice, paperCost, lam, cut, prep: +o.prep || 0, cost, ...p, perPiece: p.price / qty };
   }
   function custom(o, market, ctype) {
@@ -577,7 +577,7 @@ function makeEngine(D) {
   function line(l, market, ctype) {
     if (l.fixed && l.calc) {
       // calculator lines re-price with the quote's market, like Excel's calculator market cell
-      const r = l.calc.tab === 'digital' ? digital(l.calc, market) : custom(l.calc, market, ctype);
+      const r = l.calc.tab === 'digital' ? digital(l.calc, market, ctype) : custom(l.calc, market, ctype);
       if (r && !r.error) return fixedLine({ ...l, price: r.price, cost: r.cost, min: r.min }, ctype);
     }
     if (l.fixed) return fixedLine(l, ctype);
@@ -1273,7 +1273,7 @@ function updateCalc() {
   const market = c.market;
   let r;
   if (c.tab === 'digital') {
-    r = E.digital({ w: c.w, h: c.h, qty: c.qty, paper: c.paper, sides: c.sides, lam: c.lam, prep: c.prep, hours: c.hours }, market);
+    r = E.digital({ w: c.w, h: c.h, qty: c.qty, paper: c.paper, sides: c.sides, lam: c.lam, prep: c.prep, hours: c.hours }, market, c.standalone ? 'Regular' : state.draft.ctype);
     if (!r) { out.innerHTML = TR('<div class="check info">اكتب المقاس والكمية.</div>'); return setAdd(false); }
     if (r.error) { out.innerHTML = `<div class="check bad">⚠ ${r.error}</div>`; return setAdd(false); }
     out.innerHTML = `
@@ -1303,7 +1303,7 @@ function setAdd(ok) { const b = $('#calcAdd'); if (b) b.disabled = !ok; }
 /*i18n-skip*/function calcToLine() {
   const c = calc, market = c.market;
   if (c.tab === 'digital') {
-    const r = E.digital(c, market);
+    const r = E.digital(c, market, c.standalone ? 'Regular' : state.draft.ctype);
     const sides = c.sides === 2 ? 'وش وضهر' : 'وش';
     return { fixed: true, kind: 'digital', cat: 'ديجيتال', desc: `طباعة ديجيتال - ${c.paper} - ${sides}${c.lam ? ' - سلفنة' : ''} - مقاس ${c.w}×${c.h} سم`,
       descEn: `Digital print - ${PAPER_EN[c.paper] || c.paper} - ${c.sides === 2 ? 'double-sided' : 'single-sided'}${c.lam ? ' - laminated' : ''} - ${c.w}×${c.h} cm`,
