@@ -1727,8 +1727,8 @@ function invoicePickSheet() {
 }
 
 /* «رسالة دفع»: a WhatsApp message with one link per payment method → the public payment page (pwa/pay/, same look as the invoices) */
-const PAY_URL = 'https://ismaeloo04.github.io/graficoo-app/pay/';
-const payLink = () => PAY_URL;   // one short link with every payment method; the amount is written in the message
+const PAY_URL = 'graficoost.github.io/pay';   // short link (WhatsApp makes it clickable); the page also lives at …/graficoo-app/pay/
+const payLink = () => 'https://' + PAY_URL;   // one short link with every payment method; the amount is written in the message
 const payDefault = (p) => p.due > 0 ? Math.round(p.due) : Math.round(num(p.quote) * 0.5);
 function payMsg(p, amt) {
   /*i18n-skip*/const part = p.due > 0 ? (amt < p.due - 0.5 ? 'دفعة من حساب' : 'باقي حساب') : 'المقدم المطلوب لـ';
