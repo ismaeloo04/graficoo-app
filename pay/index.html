@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ادفع لجرافيكوو ستوديو</title>
+<meta name="description" content="طرق الدفع لجرافيكوو ستوديو — إنستاباي، فودافون كاش، اتصالات كاش، تحويل بنكي.">
+<meta name="theme-color" content="#1E1E1E">
+<link rel="icon" href="../icons/v2-any-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alexandria:wght@600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap">
+<style>
+/* Graficoo payment page — same look as the quotes / invoices (paper, black header, red line, pills). Static: works without the app. */
+:root {
+  --paper: #FFFFFF; --ink: #141414; --gray: #CECECF; --gray-2: #F1F1F2; --black: #1E1E1E; --red: #EE2E24; --muted: #6B6B70; --ok: #0E7A39;
+  --f-ui: "Montserrat", "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --f-ar: "IBM Plex Sans Arabic", "Montserrat", system-ui, sans-serif;
+  --f-display: "Alexandria", "IBM Plex Sans Arabic", system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: #E9E9EA; color: var(--ink); font-family: var(--f-ar); font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
+.paper { max-width: 560px; margin: 0 auto; min-height: 100vh; background: var(--paper); padding: 16px 16px 8px; }
+@media (min-width: 600px) { body { padding: 24px 0; } .paper { min-height: 0; border-radius: 18px; box-shadow: 0 2px 16px rgba(0,0,0,.12); padding: 22px 22px 10px; } }
+.ph { background: var(--black); border-radius: 18px; height: 92px; display: flex; align-items: center; padding-inline: 22px; direction: ltr; }
+.ph img { height: 44px; width: auto; }
+.redline { height: 6px; background: var(--red); margin: 7px 34px 0; border-radius: 6px; }
+.title { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 22px 2px 6px; }
+h1 { font-family: var(--f-display); font-size: 27px; font-weight: 800; margin: 0; line-height: 1.2; }
+h1 em { color: var(--red); font-style: normal; }
+.ref { font-family: var(--f-ui); font-weight: 700; font-size: 13px; background: var(--black); color: #fff; border-radius: 99px; padding: 4px 12px; white-space: nowrap; direction: ltr; }
+.amount { margin: 14px 0 4px; display: flex; align-items: stretch; background: var(--gray); border-radius: 12px; overflow: hidden; }
+.amount > span { background: var(--black); color: #fff; font-weight: 600; padding: 12px 16px; border-radius: 12px; display: flex; align-items: center; white-space: nowrap; }
+.amount b { flex: 1; font-family: var(--f-ui); font-size: 26px; font-weight: 800; padding: 8px 16px; display: flex; align-items: center; justify-content: flex-end; direction: ltr; gap: 6px; }
+.amount b small { font-family: var(--f-ar); font-size: 14px; font-weight: 600; color: var(--muted); }
+.hint { color: var(--muted); font-size: 13px; margin: 6px 2px 0; }
+h4 { font-family: var(--f-display); font-size: 18px; font-weight: 700; margin: 22px 2px 10px; display: flex; align-items: center; gap: 8px; }
+h4::before { content: ""; width: 6px; height: 20px; border-radius: 3px; background: var(--red); }
+.m { border: 1.5px solid var(--gray); border-radius: 16px; padding: 14px; margin-bottom: 10px; scroll-margin-top: 14px; transition: border-color .2s, box-shadow .2s; }
+.m.on { border-color: var(--red); box-shadow: 0 0 0 3px rgba(238,46,36,.12); }
+.mh { display: flex; align-items: center; gap: 10px; }
+.mh .pill { background: var(--black); color: #fff; border-radius: 9px; padding: 5px 12px; font-weight: 700; font-size: 14px; white-space: nowrap; }
+.mh .en { color: var(--muted); font-family: var(--f-ui); font-size: 12px; font-weight: 600; margin-inline-start: auto; direction: ltr; }
+.val { margin-top: 10px; display: flex; align-items: stretch; background: var(--gray-2); border-radius: 10px; overflow: hidden; }
+.val code { flex: 1; min-width: 0; font-family: var(--f-ui); font-weight: 700; font-size: clamp(14px, 4.3vw, 17px); padding: 10px 12px; direction: ltr; text-align: left; overflow-wrap: anywhere; letter-spacing: .02em; }
+.val small { display: block; font-family: var(--f-ar); font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0; direction: rtl; text-align: right; }
+.cp { border: 0; background: var(--black); color: #fff; font: 700 13.5px var(--f-ar); padding: 0 16px; cursor: pointer; white-space: nowrap; }
+.cp.done { background: var(--ok); }
+.go { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; background: var(--red); color: #fff; text-decoration: none; font-weight: 700; font-size: 16px; border-radius: 12px; padding: 13px; }
+.go:active, .cp:active { transform: scale(.98); }
+.qr { display: flex; gap: 12px; align-items: center; margin-top: 10px; }
+.qr img { width: 112px; height: 112px; border-radius: 10px; border: 1px solid var(--gray); flex: none; object-fit: contain; background: #fff; }
+.qr p { margin: 0; color: var(--muted); font-size: 13px; }
+.steps { margin: 0; padding: 0 20px 0 0; color: var(--ink); font-size: 14px; }
+.steps li { margin-bottom: 4px; }
+.wa { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 0 4px; background: #1FAF55; color: #fff; text-decoration: none; font-weight: 700; font-size: 15.5px; border-radius: 12px; padding: 13px; }
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; padding: 14px 2px 10px; border-top: 1px solid var(--gray); direction: ltr; flex-wrap: wrap; }
+.slogan { font-family: var(--f-ui); font-weight: 700; font-size: 15px; line-height: 1.1; display: flex; align-items: center; gap: 8px; }
+.slogan em { color: var(--red); font-style: normal; display: block; }
+.slogan svg { width: 34px; height: 34px; flex: none; }
+.fpills { display: flex; gap: 6px; flex-wrap: wrap; }
+.fpills a { background: var(--black); color: #fff; border-radius: 99px; padding: 4px 11px; font-family: var(--f-ui); font-weight: 700; font-size: 12px; white-space: nowrap; text-decoration: none; }
+.toast { position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 20px); opacity: 0; background: var(--black); color: #fff; padding: 10px 18px; border-radius: 99px; font-weight: 600; transition: .2s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<main class="paper">
+  <div class="ph"><img src="logo.png" alt="Graficoo Studio"></div>
+  <div class="redline"></div>
+
+  <div class="title"><h1><em>طلب</em> دفــع</h1><span class="ref" id="ref" hidden></span></div>
+  <div class="amount" id="amountBox" hidden><span>المطلوب</span><b><span id="amount"></span><small>ج.م</small></b></div>
+  <p class="hint" id="hint">اختار طريقة الدفع اللي تريحك، وبعد التحويل ابعتلنا صورة الإيصال على واتساب.</p>
+
+  <h4>طرق الدفع</h4>
+  <div id="methods"></div>
+
+  <h4>بعد ما تحوّل</h4>
+  <ol class="steps">
+    <li>خد سكرين شوت من إيصال التحويل.</li>
+    <li>ابعته لنا على واتساب، وهنأكد استلام المبلغ.</li>
+  </ol>
+  <a class="wa" id="waDone" href="#" target="_blank" rel="noopener">ابعت صورة التحويل على واتساب</a>
+
+  <div class="foot">
+    <div class="slogan" id="slogan"><span>See the Usual<em>with Unusual Eyes</em></span></div>
+    <div class="fpills"><a href="tel:+201150704840">011 5070 4840</a><a href="https://instagram.com/graficoo_04" target="_blank" rel="noopener">@graficoo_04</a><a href="mailto:graficoo.st@gmail.com">graficoo.st@gmail.com</a></div>
+  </div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* Payment methods — keep in sync with the 'Payment' tab of the Graficoo app sheet. */
+const PAY = [
+  { id: 'ip', ar: 'إنستاباي', en: 'InstaPay', value: 'ismaeloo4@instapay', sub: 'أو على الرقم 01033973380', link: 'https://ipn.eg/S/ismaeloo4/instapay/30oeiM', qr: 'qr.jpg' },
+  { id: 'vf', ar: 'فودافون كاش', en: 'Vodafone Cash', value: '01033973380', sub: 'حوّل من محفظة فودافون كاش على الرقم ده' },
+  { id: 'et', ar: 'اتصالات كاش', en: 'e& cash', value: '01150704840', sub: 'حوّل من محفظة اتصالات كاش على الرقم ده' },
+  { id: 'bank', ar: 'تحويل بنكي', en: 'NBE · National Bank of Egypt', value: '5115001078953501016', sub: 'البنك الأهلي المصري — رقم الحساب' },
+];
+const WA = '201150704840';
+const EYES = '<svg viewBox="0 0 817 825" aria-hidden="true"><g fill="#141414"><path fill-rule="evenodd" d="M1 601A223 223 0 1 0 447 601A223 223 0 1 0 1 601ZM91 601A133 133 0 1 0 357 601A133 133 0 1 0 91 601ZM519.47 110A223 223 0 1 0 669.53 110A88 88 0 0 1 519.47 110ZM461.5 320A133 133 0 1 0 727.5 320A133 133 0 1 0 461.5 320ZM530.5 64A64 64 0 1 0 658.5 64A64 64 0 1 0 530.5 64ZM556.5 64A38 38 0 1 0 632.5 64A38 38 0 1 0 556.5 64Z"/><circle cx="277.5" cy="605" r="62.5"/><circle cx="648" cy="323" r="62"/></g></svg>';
+
+const $ = (s) => document.querySelector(s);
+const q = new URLSearchParams(location.search);
+const amount = Math.round(Number(String(q.get('a') || '').replace(/[^\d.]/g, '')) || 0);
+const ref = String(q.get('r') || '').replace(/[^\w\-#. ]/g, '').slice(0, 24);
+const focusId = q.get('m');
+const fmt = (n) => n.toLocaleString('en-US');
+
+$('#slogan').insertAdjacentHTML('afterbegin', EYES);
+if (amount > 0) { $('#amount').textContent = fmt(amount); $('#amountBox').hidden = false; }
+if (ref) { $('#ref').textContent = ref; $('#ref').hidden = false; }
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+$('#methods').innerHTML = PAY.map((m) => `
+  <section class="m${m.id === focusId ? ' on' : ''}" id="m-${m.id}">
+    <div class="mh"><span class="pill">${esc(m.ar)}</span><span class="en">${esc(m.en)}</span></div>
+    ${m.link ? `<a class="go" href="${esc(m.link)}" target="_blank" rel="noopener">ادفع بإنستاباي${amount > 0 ? ' ' + fmt(amount) + ' ج.م' : ''} ←</a>` : ''}
+    <div class="val"><code>${esc(m.value)}<small>${esc(m.sub)}</small></code><button class="cp" type="button" data-copy="${esc(m.value)}">${m.id === 'bank' ? 'انسخ رقم الحساب' : m.id === 'ip' ? 'انسخ' : 'انسخ الرقم'}</button></div>
+    ${m.qr ? `<div class="qr"><img src="${esc(m.qr)}" alt="InstaPay QR" loading="lazy"><p>أو امسح الكود ده من أبلكيشن إنستاباي أو أبلكيشن البنك.</p></div>` : ''}
+  </section>`).join('');
+
+const waText = 'أهلاً جرافيكوو، حوّلت' + (amount > 0 ? ' ' + fmt(amount) + ' ج.م' : '') + (ref ? ' (' + ref + ')' : '') + ' — ودي صورة التحويل:';
+$('#waDone').href = 'https://wa.me/' + WA + '?text=' + encodeURIComponent(waText);
+
+let tT;
+function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(tT); tT = setTimeout(() => el.classList.remove('show'), 1800); }
+async function copy(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {
+    const ta = document.createElement('textarea'); ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (er) { /* ignore */ } ta.remove(); return ok;
+  }
+}
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-copy]'); if (!b) return;
+  if (await copy(b.dataset.copy)) { const old = b.textContent; b.textContent = 'اتنسخ ✓'; b.classList.add('done'); toast('اتنسخ ✓'); setTimeout(() => { b.textContent = old; b.classList.remove('done'); }, 1800); }
+  else toast('انسخه بإيدك: ' + b.dataset.copy);
+});
+if (focusId && $('#m-' + focusId)) requestAnimationFrame(() => $('#m-' + focusId).scrollIntoView({ block: 'start', behavior: 'smooth' }));
+</script>
+</body>
+</html>
