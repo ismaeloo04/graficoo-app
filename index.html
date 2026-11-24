@@ -1728,12 +1728,11 @@ function invoicePickSheet() {
 
 /* «رسالة دفع»: a WhatsApp message with one link per payment method → the public payment page (pwa/pay/, same look as the invoices) */
 const PAY_URL = 'https://ismaeloo04.github.io/graficoo-app/pay/';
-/*i18n-skip*/const PAY_METHODS = [['ip', '💳', 'إنستاباي'], ['vf', '📱', 'فودافون كاش'], ['et', '📱', 'اتصالات كاش'], ['bank', '🏦', 'تحويل بنكي (البنك الأهلي)']];/*/i18n-skip*/
-const payLink = (amt, ref, m) => `${PAY_URL}?a=${Math.round(num(amt))}&r=${encodeURIComponent(ref || '')}${m ? '&m=' + m : ''}`;
+const payLink = () => PAY_URL;   // one short link with every payment method; the amount is written in the message
 const payDefault = (p) => p.due > 0 ? Math.round(p.due) : Math.round(num(p.quote) * 0.5);
 function payMsg(p, amt) {
-  /*i18n-skip*/const part = p.due > 0 ? (amt < p.due - 0.5 ? 'دفعة من حساب' : 'باقي حساب') : 'مقدم';
-  return `أهلاً يا ${firstName(p.clientName)}،\n${part} «${p.desc}» (${p.id}): ${moneyAr(amt)}\nتقدر تدفع بالطريقة اللي تريحك — دوس على اللينك:\n\n${PAY_METHODS.map(([m, ic, l]) => `${ic} ${l}\n${payLink(amt, p.id, m)}`).join('\n\n')}\n\nوبعد التحويل ابعتلنا صورة الإيصال هنا 🙏\n${STUDIO.name}`;/*/i18n-skip*/
+  /*i18n-skip*/const part = p.due > 0 ? (amt < p.due - 0.5 ? 'دفعة من حساب' : 'باقي حساب') : 'المقدم المطلوب لـ';
+  return `أهلاً يا ${firstName(p.clientName)} 👋\n${part} «${p.desc}»: ${moneyAr(amt)}\nمتاح الدفع بإنستاباي، فودافون كاش، اتصالات كاش أو تحويل بنكي من هنا:\n${PAY_URL}\nوبعد التحويل ابعتلنا صورة الإيصال 🙏`;/*/i18n-skip*/
 }
 function payMsgSheet(id) {
   const p = state.projects.find((x) => x.id === id), c = clientOfProject(p), amt = payDefault(p), msg = payMsg(p, amt);
@@ -2107,7 +2106,7 @@ async function sendDoc() {
       phone = c.mobile;
 /*i18n-skip*/      text = doc.lang === 'en'
         ? `Hello ${firstName(doc.client.name)},\nPlease find your ${doc.type === 'invoice' ? 'invoice' : 'quotation'} ${doc.no} from ${STUDIO.nameEn}:\n${up.url}`
-        : `أهلاً يا ${firstName(doc.client.name)}،\nده ${kindAr} ${doc.no} من ${STUDIO.name}:\n${up.url}\n${doc.type === 'quote' ? `العرض ساري لحد ${arDate(doc.until)}.` : ''}${doc.type === 'invoice' && doc.total - (doc.paid || 0) > 0.5 ? `للدفع بالطريقة اللي تريحك (إنستاباي، فودافون كاش، اتصالات كاش، بنك):\n${payLink(doc.total - (doc.paid || 0), p ? p.id : doc.no)}` : ''}`;/*/i18n-skip*/
+        : `أهلاً يا ${firstName(doc.client.name)}،\nده ${kindAr} ${doc.no} من ${STUDIO.name}:\n${up.url}\n${doc.type === 'quote' ? `العرض ساري لحد ${arDate(doc.until)}.` : ''}${doc.type === 'invoice' && doc.total - (doc.paid || 0) > 0.5 ? `للدفع (إنستاباي، فودافون كاش، اتصالات كاش أو بنك):\n${PAY_URL}` : ''}`;/*/i18n-skip*/
     }
 /*i18n-skip*/    const log = { quote: `اتبعت عرض السعر ${doc.no}`, invoice: `اتبعتت الفاتورة ${doc.no}`, job: `اتبعت أمر الشغل لـ ${s.supplier}` }[doc.type];/*/i18n-skip*/
     if (p) {
